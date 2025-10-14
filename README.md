@@ -1,20 +1,17 @@
-# Troy-and-bank
 
+# Utility Billing AI System
 
-# Automated Utility Billing - MVP
+This project automates the detection of billing errors in electricity and utility invoices using AI-based rule extraction and data comparison.
 
-## Overview
-Project to build an AI-assisted billing audit to detect tariff misapplication and overcharges.
+### 📁 Project Structure
+- `src/` – All Python source code and agents
+- `data/` – Sample raw and processed datasets
+- `docs/` – Architecture, proposals, flow diagrams
+- `tests/` – Unit and integration tests
+- `notebooks/` – Exploratory and testing notebooks
 
-## Repo structure
-- src/: agents and core code
-- data/: raw and processed data
-- notebooks/: exploratory work
-- tests/: unit/integration tests
-
-## Quick start
-1. Create a Python virtualenv
-2. Install dependencies from requirements.txt
-3. Configure .env with DB credentials
-
-EOF
+### ⚙️ Setup
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt

@@ -1,6 +1,6 @@
 # Troy-and-bank
 
-cat > utility-billing-ai/README.md <<'EOF'
+
 # Automated Utility Billing - MVP
 
 ## Overview

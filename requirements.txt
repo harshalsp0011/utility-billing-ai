@@ -1,0 +1,36 @@
+# Core
+pandas
+numpy
+openpyxl
+sqlalchemy
+psycopg2-binary
+
+# PDF Processing
+pdfplumber
+camelot-py[cv]
+pytesseract
+opencv-python
+PyMuPDF
+
+# NLP / Rule Extraction
+spacy
+regex
+
+# API + Orchestration
+fastapi
+uvicorn
+apache-airflow
+redis
+
+# Reporting / Visualization
+plotly
+dash
+reportlab
+
+# Testing
+pytest
+pytest-cov
+
+# Utils
+python-dotenv
+requests

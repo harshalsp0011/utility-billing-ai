@@ -1,8 +1,25 @@
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
 .env
-*.log
+
+# Data folders
 data/raw/*
 data/processed/*
-.venv/
+data/output/*
+
+# Notebooks checkpoints
+.ipynb_checkpoints
+
+# OS files
 .DS_Store
+
+# Logs
+*.log

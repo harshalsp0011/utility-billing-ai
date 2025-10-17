@@ -10,10 +10,7 @@ __pycache__/
 venv/
 .env
 
-# Data folders
-data/raw/*
-data/processed/*
-data/output/*
+
 
 # Notebooks checkpoints
 .ipynb_checkpoints

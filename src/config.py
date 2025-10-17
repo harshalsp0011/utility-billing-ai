@@ -1,22 +1,25 @@
-# config.py
+# src/config.py
 import os
 from dotenv import load_dotenv
+from sqlalchemy.engine.url import URL
 
 load_dotenv()
 
-# -------- Paths --------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+DB_TYPE = os.getenv("DB_TYPE", "sqlite")
+DB_URL = None
 
-# -------- Local Database --------
-DB_URL = os.getenv("DB_URL", "sqlite:///local.db")
+if DB_TYPE == "postgres":
+    DB_URL = URL.create(
+        drivername="postgresql+psycopg2",
+        username=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        database=os.getenv("DB_NAME"),
+    )
+else:
+    DB_PATH = os.getenv("DB_PATH", "data/project.db")
+    DB_URL = f"sqlite:///{DB_PATH}"
 
-# -------- General Settings --------
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
-
-if DEBUG:
-    print("✅ Local configuration loaded successfully!")
-    print(f"BASE_DIR: {BASE_DIR}")
-    print(f"DATA_DIR: {DATA_DIR}")
-    print(f"OUTPUT_DIR: {OUTPUT_DIR}")
+print(f"✅ Using database: {DB_URL}")
+ENV = os.getenv("ENV", "dev")

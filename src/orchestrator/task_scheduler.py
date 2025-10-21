@@ -27,8 +27,35 @@ import schedule
 from datetime import datetime
 from src.utils.logger import get_logger
 from src.orchestrator.workflow_manager import run_full_workflow
+from src.orchestrator.workflow_manager import (
+    run_document_processor,
+    run_tariff_analysis,
+    run_bill_comparison,
+    run_error_detection,
+    run_reporting
+)
+
 
 logger = get_logger(__name__)
+
+def run_single_agent(agent_name: str):
+    """
+    Run one specific agent by name (manual trigger).
+    """
+    mapping = {
+        "document": run_document_processor,
+        "tariff": run_tariff_analysis,
+        "comparison": run_bill_comparison,
+        "error": run_error_detection,
+        "reporting": run_reporting
+    }
+
+    if agent_name not in mapping:
+        logger.error(f"❌ Unknown agent: {agent_name}")
+        return
+
+    run_task(f"Agent-{agent_name}", mapping[agent_name])
+
 
 # ----------------------------------------------------------------------
 # 1️⃣ Helper Function: Run and Log Task

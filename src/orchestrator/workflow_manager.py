@@ -54,7 +54,7 @@ def run_document_processor():
 
     # Example metadata
     metadata = {
-        "file_name": "Hampton_Sep2025.pdf",
+        "file_name": "test1.pdf",
         "file_type": "PDF",
         "upload_date": str(datetime.now().date()),
         "source": "City of Hampton",
@@ -87,12 +87,13 @@ def run_bill_comparison():
     # Simulate a small processed DataFrame
     import pandas as pd
     df = pd.DataFrame({
-        "account_id": ["A123", "A124"],
+        "account_id": ["test1", "A124"],
         "usage_kwh": [900, 880],
         "actual_charge": [120.0, 118.0],
         "expected_charge": [110.0, 115.0],
         "difference": [10.0, 3.0]
     })
+
     save_csv(df, "processed", "comparison_results.csv")
     insert_processed_data(df)
     logger.info("✅ Bill Comparison completed.")
@@ -108,7 +109,7 @@ def run_error_detection():
     time.sleep(1)
 
     record = {
-        "account_id": "A123",
+        "account_id": "test1",
         "issue_type": "Overcharge",
         "description": "Charge exceeds tariff by $10",
         "detected_on": str(datetime.now().date()),

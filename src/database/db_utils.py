@@ -28,10 +28,24 @@ from src.database.models import RawDocument, ProcessedData, ValidationResult
 logger = get_logger(__name__)
 
 # ----------------------------------------------------------------------
-# 1️⃣ Setup Engine and Session Factory
+# 1️⃣ Setup Engine and Session Factory (Lazy-loaded)
 # ----------------------------------------------------------------------
-engine = create_engine(DB_URL)
-SessionLocal = sessionmaker(bind=engine)
+_engine = None
+_SessionLocal = None
+
+def get_engine():
+    """Lazily create and return the SQLAlchemy engine."""
+    global _engine
+    if _engine is None:
+        _engine = create_engine(DB_URL)
+    return _engine
+
+def get_session():
+    """Lazily create and return a new database session."""
+    global _SessionLocal
+    if _SessionLocal is None:
+        _SessionLocal = sessionmaker(bind=get_engine())
+    return _SessionLocal()
 
 # ----------------------------------------------------------------------
 # 2️⃣ Insert Functions
@@ -45,7 +59,7 @@ def insert_raw_document(metadata: dict):
     metadata : dict
         Should contain file_name, file_type, upload_date, source, status
     """
-    session = SessionLocal()
+    session = get_session()
     try:
         doc = RawDocument(**metadata)
         session.add(doc)
@@ -61,7 +75,7 @@ def insert_processed_data(df: pd.DataFrame):
     """
     Bulk insert processed data from a DataFrame into the ProcessedData table.
     """
-    session = SessionLocal()
+    session = get_session()
     try:
         # Align incoming DataFrame columns to the DB schema defined in models.ProcessedData
         # DB columns: account_id, rate_code, usage_kwh, demand_kw, charge_amount, billing_date, source_file
@@ -102,7 +116,7 @@ def insert_processed_data(df: pd.DataFrame):
                 pass
 
         # Insert
-        df_aligned.to_sql("processed_data", engine, if_exists="append", index=False, method="multi")
+        df_aligned.to_sql("processed_data", get_engine(), if_exists="append", index=False, method="multi")
         logger.info(
             f"💾 Inserted {len(df_aligned)} rows into ProcessedData table. Incoming cols: {list(df.columns)} -> stored cols: {db_cols}"
         )
@@ -117,7 +131,7 @@ def insert_validation_result(record: dict):
     """
     Inserts a single validation result (e.g., detected error or anomaly).
     """
-    session = SessionLocal()
+    session = get_session()
     try:
         val = ValidationResult(**record)
         session.add(val)
@@ -134,7 +148,7 @@ def insert_validation_result(record: dict):
 # ----------------------------------------------------------------------
 def fetch_all_raw_docs():
     """Returns a list of all raw documents."""
-    session = SessionLocal()
+    session = get_session()
     try:
         results = session.query(RawDocument).all()
         logger.info(f"📂 Retrieved {len(results)} raw documents.")
@@ -148,7 +162,7 @@ def fetch_all_raw_docs():
 def fetch_processed_data(limit: int = 10):
     """Fetch limited processed data rows for review."""
     try:
-        df = pd.read_sql(f"SELECT * FROM processed_data LIMIT {limit}", engine)
+        df = pd.read_sql(f"SELECT * FROM processed_data LIMIT {limit}", get_engine())
         logger.info(f"📊 Fetched {len(df)} processed rows.")
         return df
     except Exception as e:
@@ -162,7 +176,7 @@ def update_document_status(file_name: str, new_status: str):
     """
     Updates the status of a document record (e.g., 'processed', 'error', etc.)
     """
-    session = SessionLocal()
+    session = get_session()
     try:
         doc = session.query(RawDocument).filter_by(file_name=file_name).first()
         if doc:

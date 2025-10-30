@@ -21,5 +21,6 @@ else:
     DB_PATH = os.getenv("DB_PATH", "data/project.db")
     DB_URL = f"sqlite:///{DB_PATH}"
 
-print(f"✅ Using database: {DB_URL}")
+# Removed print statement to avoid output during DAG import in Airflow
+# print(f"✅ Using database: {DB_URL}")
 ENV = os.getenv("ENV", "dev")

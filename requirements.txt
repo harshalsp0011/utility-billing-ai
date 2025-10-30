@@ -88,8 +88,8 @@ preshed==3.0.10
 protobuf==6.32.1
 psutil==7.1.0
 psycopg2-binary==2.9.11
-pydantic==2.12.2
-pydantic_core==2.41.4
+pydantic==2.11.10  # pinned for Airflow 3.1.0 API compatibility
+pydantic_core==2.33.2  # matched to pydantic 2.11.x
 pygtrie==2.5.0
 PyJWT==2.10.1
 PyMuPDF==1.26.5

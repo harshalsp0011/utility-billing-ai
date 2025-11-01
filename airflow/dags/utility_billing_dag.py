@@ -19,6 +19,8 @@ from datetime import timedelta
 import pendulum
 import sys
 from pathlib import Path
+import importlib
+
 
 # Add project root to Python path so we can import from src/
 # DAG file is at: <project_root>/airflow/dags/utility_billing_dag.py
@@ -47,6 +49,21 @@ logger.info(f"sys.path[:3]={sys.path[:3]}")
 # DO NOT import orchestrator functions at module level - this causes 50s timeout!
 # Instead, we'll import them inside the task functions when they're actually called.
 # This keeps DAG parsing fast (<0.1s) and defers heavy imports to task execution time.
+
+def run_agent_with_logging(agent_func, agent_name, **kwargs):
+    from src.database.db_utils import start_pipeline_run, update_pipeline_run
+
+    dag_id = kwargs["dag"].dag_id
+    run_id = start_pipeline_run(f"{dag_id}:{agent_name}")
+
+    try:
+        result = agent_func()
+        status = "success" if result else "failed"
+        update_pipeline_run(run_id, status)
+        return result
+    except Exception as e:
+        update_pipeline_run(run_id, "failed", str(e))
+        raise
 
 # Wrapper functions that import at runtime (when task actually executes)
 def run_document_processor(**kwargs):
@@ -102,34 +119,35 @@ with DAG(
 
     # --------------- DEFINE TASKS -----------------
     t1 = PythonOperator(
-        task_id='document_processing',
-        python_callable=run_document_processor,
+    task_id='document_processing',
+    python_callable=lambda **kwargs: run_agent_with_logging(run_document_processor, "document_processing", **kwargs),
     )
 
     t2 = PythonOperator(
-        task_id='tariff_analysis',
-        python_callable=run_tariff_analysis,
+    task_id='tariff_analysis',
+    python_callable=lambda **kwargs: run_agent_with_logging(run_tariff_analysis, "tariff_analysis", **kwargs),
     )
 
     t3 = PythonOperator(
-        task_id='bill_comparison',
-        python_callable=run_bill_comparison,
+    task_id='bill_comparison',
+    python_callable=lambda **kwargs: run_agent_with_logging(run_bill_comparison, "bill_comparison", **kwargs),
     )
 
     t4 = PythonOperator(
-        task_id='error_detection',
-        python_callable=run_error_detection,
+    task_id='error_detection',
+    python_callable=lambda **kwargs: run_agent_with_logging(run_error_detection, "error_detection", **kwargs),
     )
 
     t5 = PythonOperator(
-        task_id='validation',
-        python_callable=validation,
+    task_id='validation',
+    python_callable=validation,
     )
 
     t6 = PythonOperator(
-        task_id='reporting',
-        python_callable=run_reporting,
+    task_id='reporting',
+    python_callable=lambda **kwargs: run_agent_with_logging(run_reporting, "reporting", **kwargs),
     )
+
 
     # --------------- TASK DEPENDENCIES -------------
     t1 >> t2 >> t3 >> t4 >> t5 >> t6

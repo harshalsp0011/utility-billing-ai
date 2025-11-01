@@ -1,7 +1,7 @@
 # src/database/init_db.py
 
 from sqlalchemy import create_engine
-from src.config import DB_URL  # Adjust path if config.py changes
+from src.utils.config import DB_URL  # Adjust path if config.py changes
 from src.database.models import Base
 
 def init_db():

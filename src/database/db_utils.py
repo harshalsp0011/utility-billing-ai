@@ -20,7 +20,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
-
+from datetime import datetime
+from src.database.models import PipelineRun
 from src.utils.config import DB_URL
 from src.utils.logger import get_logger
 from src.database.models import RawDocument, ProcessedData, ValidationResult
@@ -59,6 +60,7 @@ def insert_raw_document(metadata: dict):
     metadata : dict
         Should contain file_name, file_type, upload_date, source, status
     """
+    logger.info("start of insert_raw_document")
     session = get_session()
     try:
         doc = RawDocument(**metadata)
@@ -69,12 +71,14 @@ def insert_raw_document(metadata: dict):
         logger.error(f"❌ Failed to insert raw document: {e}")
         session.rollback()
     finally:
+        logger.info("end of insert_raw_document")
         session.close()
 
 def insert_processed_data(df: pd.DataFrame):
     """
     Bulk insert processed data from a DataFrame into the ProcessedData table.
     """
+    logger.info("start of insert_processed_data")
     session = get_session()
     try:
         # Align incoming DataFrame columns to the DB schema defined in models.ProcessedData
@@ -125,12 +129,14 @@ def insert_processed_data(df: pd.DataFrame):
             f"❌ Failed to insert processed data: {e}\nIncoming columns: {list(df.columns)}"
         )
     finally:
+        logger.info("end of insert_processed_data")
         session.close()
 
 def insert_validation_result(record: dict):
     """
     Inserts a single validation result (e.g., detected error or anomaly).
     """
+    logger.info("start of insert_validation_result")
     session = get_session()
     try:
         val = ValidationResult(**record)
@@ -141,6 +147,7 @@ def insert_validation_result(record: dict):
         logger.error(f"❌ Failed to insert validation result: {e}")
         session.rollback()
     finally:
+        logger.info("end of insert_validation_result")
         session.close()
 
 # ----------------------------------------------------------------------
@@ -148,6 +155,7 @@ def insert_validation_result(record: dict):
 # ----------------------------------------------------------------------
 def fetch_all_raw_docs():
     """Returns a list of all raw documents."""
+    logger.info("start of fetch_all_raw_docs")
     session = get_session()
     try:
         results = session.query(RawDocument).all()
@@ -157,6 +165,7 @@ def fetch_all_raw_docs():
         logger.error(f"❌ Failed to fetch raw docs: {e}")
         return []
     finally:
+        logger.info("end of fetch_all_raw_docs")
         session.close()
 
 def fetch_processed_data(limit: int = 10):
@@ -214,3 +223,54 @@ if __name__ == "__main__":
     update_document_status("Hampton_Sept2025.pdf", "processed")
 
     logger.info("✅ db_utils self-test completed.")
+
+
+# ----------------------------------------------------------------------
+# 6️⃣ Pipeline Run Management
+# ----------------------------------------------------------------------
+
+def start_pipeline_run(dag_id: str):
+    """
+    Creates a new pipeline run entry and returns its run_id.
+    """
+    logger.info("start of start_pipeline_run")
+    session = get_session()
+    try:
+        run = PipelineRun(dag_id=dag_id, status="running")
+        session.add(run)
+        session.commit()
+        logger.info(f"🟢 Started pipeline run {run.id} for {dag_id}")
+        return run.id
+    except SQLAlchemyError as e:
+        logger.error(f"❌ Failed to start pipeline run: {e}")
+        session.rollback()
+        return None
+    finally:
+        logger.info("end of start_pipeline_run")
+        session.close()
+
+
+def update_pipeline_run(run_id: int, status: str, error_msg: str = None):
+    """
+    Updates pipeline run end_time, total_runtime, and final status.
+    """
+    logger.info("start of update_pipeline_run")
+    session = get_session()
+    try:
+        run = session.query(PipelineRun).filter_by(id=run_id).first()
+        if run:
+            run.end_time = datetime.utcnow()
+            run.status = status
+            if run.start_time:
+                run.total_runtime = int((run.end_time - run.start_time).total_seconds())
+            run.error_msg = error_msg
+            session.commit()
+            logger.info(f"🔄 Updated pipeline run {run_id} → {status}")
+        else:
+            logger.warning(f"⚠️ Pipeline run {run_id} not found.")
+    except SQLAlchemyError as e:
+        logger.error(f"❌ Failed to update pipeline run {run_id}: {e}")
+        session.rollback()
+    finally:
+        logger.info("end of update_pipeline_run")
+        session.close()

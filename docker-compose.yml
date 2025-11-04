@@ -1,0 +1,49 @@
+version: "3.9"
+
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:2.10.2
+  env_file:
+    - .env
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./src:/opt/airflow/src
+    - ./data:/opt/airflow/data
+  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-0}"
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+
+  airflow:
+    <<: *airflow-common
+    container_name: airflow
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    command: bash -c "airflow db migrate && airflow standalone"
+
+  streamlit:
+    build: ./app
+    container_name: streamlit
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - airflow
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data

@@ -41,6 +41,14 @@ if env_root:
     _add_path_front(Path(env_root).expanduser().resolve())
     _add_path_front(Path(env_root).expanduser().resolve() / "src")
 
+# Load .env from project root (so env vars are available to all modules)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(str(project_root / ".env"))
+except Exception:
+    # dotenv not available or .env missing; continue and rely on existing env
+    pass
+
 # Import logger after we've ensured `project_root` and `src/` are on sys.path
 try:
     from src.utils.logger import get_logger
@@ -103,22 +111,44 @@ if "Upload" in page:
 # -----------------------------------------------------
 # 2. Run Workflow
 # -----------------------------------------------------
+
+# elif "Run Workflow" in page:
+#     #from app.components.workflow_trigger import render_workflow_trigger
+#     #render_workflow_trigger()
+#     st.title("Run Workflow")
+#     st.write("Click below to start the full billing analysis pipeline.")
+
+#     from app.components.airflow_trigger import trigger_dag_run, monitor_dag_run
+
+#     if st.button(" Start Airflow Workflow"):
+#         logger.info("start of run_workflow")
+#         dag_run_id = trigger_dag_run()
+#         if dag_run_id:
+            
+#             st.info(f"Triggered Airflow DAG Run: **{dag_run_id}**")
+#             monitor_dag_run(dag_run_id)
+#         else:
+#             st.warning("Could not trigger DAG. Try again later.")
+
+
 elif "Run Workflow" in page:
-    #from app.components.workflow_trigger import render_workflow_trigger
-    #render_workflow_trigger()
     st.title("Run Workflow")
     st.write("Click below to start the full billing analysis pipeline.")
 
     from app.components.airflow_trigger import trigger_dag_run, monitor_dag_run
 
-    if st.button(" Start Airflow Workflow"):
-        logger.info("start of run_workflow")
+    if st.button("▶️ Start Airflow Workflow"):
+        logger.info("User clicked: Start Airflow Workflow")
+        
+        # Trigger the DAG
         dag_run_id = trigger_dag_run()
+        
         if dag_run_id:
-            st.info(f"Triggered Airflow DAG Run: **{dag_run_id}**")
-            monitor_dag_run(dag_run_id)
+            st.info(f"✅ Triggered DAG Run: **{dag_run_id}**")
+            # Monitor the DAG with 5-second refresh interval
+            monitor_dag_run(dag_run_id, refresh_interval=5)
         else:
-            st.warning("Could not trigger DAG. Try again later.")
+            st.warning("⚠️ Could not trigger DAG. Try again later.")
 
 # -----------------------------------------------------
 # 3. Pipeline Monitor

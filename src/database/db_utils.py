@@ -170,8 +170,10 @@ def fetch_all_raw_docs():
 
 def fetch_processed_data(limit: int = 10):
     """Fetch limited processed data rows for review."""
+    engine = get_engine()
     try:
-        df = pd.read_sql(f"SELECT * FROM processed_data LIMIT {limit}", get_engine())
+        with engine.connect() as connection:
+            df = pd.read_sql(f"SELECT * FROM processed_data LIMIT {limit}", connection)
         logger.info(f"📊 Fetched {len(df)} processed rows.")
         return df
     except Exception as e:

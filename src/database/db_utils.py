@@ -21,10 +21,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
 from datetime import datetime
-from src.database.models import PipelineRun
 from src.utils.config import DB_URL
 from src.utils.logger import get_logger
-from src.database.models import RawDocument, ProcessedData, ValidationResult
+from src.database.models import RawDocument, ProcessedData, ValidationResult,PipelineRun, UserBills
 
 logger = get_logger(__name__)
 
@@ -276,3 +275,82 @@ def update_pipeline_run(run_id: int, status: str, error_msg: str = None):
     finally:
         logger.info("end of update_pipeline_run")
         session.close()
+
+
+def insert_user_bill(record: dict):
+    """
+    Inserts a single UserBills record.
+    """
+    logger.info("start of insert_user_bill")
+    session = get_session()
+    try:
+        bill = UserBills(**record)
+        session.add(bill)
+        session.commit()
+        logger.info(f"📄 Inserted UserBills record for Account {record.get('bill_account')}")
+    except SQLAlchemyError as e:
+        logger.error(f"❌ Failed to insert UserBills record: {e}")
+        session.rollback()
+    finally:
+        logger.info("end of insert_user_bill")
+        session.close()
+
+
+def insert_user_bills_bulk(df: pd.DataFrame):
+    """
+    Bulk insert UserBills records from a DataFrame.
+    """
+    logger.info("start of insert_user_bills_bulk")
+    session = get_session()
+    try:
+        db_cols = [
+            "bill_account",
+            "customer",
+            "bill_date",
+            "read_date",
+            "days_used",
+            "billed_kwh",
+            "billed_demand",
+            "load_factor",
+            "billed_rkva",
+            "bill_amount",
+            "sales_tax_amt",
+            "bill_amount_with_sales_tax",
+            "retracted_amt",
+            "sales_tax_factor",
+        ]
+        for col in db_cols:
+            if col not in df.columns:
+                df[col] = None
+        df = df[db_cols]
+        if "bill_date" in df.columns:
+            try:
+                df["bill_date"] = pd.to_datetime(df["bill_date"], errors="coerce")
+            except Exception:
+                pass
+        if "read_date" in df.columns:
+            try:
+                df["read_date"] = pd.to_datetime(df["read_date"], errors="coerce")
+            except Exception:
+                pass
+        df.to_sql("user_bills", get_engine(), if_exists="append", index=False, method="multi")
+        logger.info(f"💾 Inserted {len(df)} rows into UserBills table.")
+    except Exception as e:
+        logger.error(f"❌ Failed to insert UserBills bulk: {e}")
+    finally:
+        logger.info("end of insert_user_bills_bulk")
+        session.close()
+
+
+def fetch_user_bills(limit: int = 10):
+    """Fetch limited UserBills rows for review."""
+    engine = get_engine()
+    try:
+        with engine.connect() as connection:
+            df = pd.read_sql(f"SELECT * FROM user_bills LIMIT {limit}", connection)
+        logger.info(f"📊 Fetched {len(df)} UserBills rows.")
+        return df
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch UserBills: {e}")
+        return pd.DataFrame()
+    logger.info("end of fetch_user_bills")

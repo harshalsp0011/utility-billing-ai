@@ -1,5 +1,6 @@
 # src/database/models.py
 
+
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -61,4 +62,28 @@ class PipelineRun(Base):
     status = Column(String(20), default="running")
     total_runtime = Column(Integer)
     error_msg = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UserBills(Base):
+    """
+    Stores detailed billing information for each user.
+    """
+    __tablename__ = "user_bills"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    bill_account = Column(String(100))
+    customer = Column(String(255))
+    bill_date = Column(Date)
+    read_date = Column(Date)
+    days_used = Column(Integer)
+    billed_kwh = Column(Float)
+    billed_demand = Column(Float)
+    load_factor = Column(Float)
+    billed_rkva = Column(Float)
+    bill_amount = Column(Float)
+    sales_tax_amt = Column(Float)
+    bill_amount_with_sales_tax = Column(Float)
+    retracted_amt = Column(Float)
+    sales_tax_factor = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)

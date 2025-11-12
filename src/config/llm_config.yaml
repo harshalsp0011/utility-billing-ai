@@ -1,8 +1,0 @@
-model_backend: ollama
-ollama_model: "mistral:7b"
-temperature: 0.1
-max_retries: 2
-
-
-page_start: 556
-page_end: 566

@@ -24,6 +24,8 @@ from datetime import datetime
 from src.utils.config import DB_URL
 from src.utils.logger import get_logger
 from src.database.models import RawDocument, ProcessedData, ValidationResult,PipelineRun, UserBills
+from src.database.models import ServiceClassification, SC1RateDetails
+
 
 logger = get_logger(__name__)
 
@@ -354,3 +356,72 @@ def fetch_user_bills(limit: int = 10):
         logger.error(f"❌ Failed to fetch UserBills: {e}")
         return pd.DataFrame()
     logger.info("end of fetch_user_bills")
+
+
+
+def insert_service_classification(data: dict):
+    """
+    Inserts a new Service Classification record.
+    data: dict with keys 'code' and optional 'description'
+    """
+    logger.info("start of insert_service_classification")
+    session = get_session()
+    try:
+        sc = ServiceClassification(**data)
+        session.add(sc)
+        session.commit()
+        logger.info(f"✅ Inserted Service Classification: {data.get('code')}")
+        return sc.id
+    except SQLAlchemyError as e:
+        logger.error(f"❌ Failed to insert Service Classification: {e}")
+        session.rollback()
+        return None
+    finally:
+        session.close()
+
+
+def insert_sc1_rate_detail(data: dict):
+    """
+    Inserts a new SC1 Rate Detail record.
+    data: dict with effective_date, etc. Must include service_classification_id.
+    """
+    logger.info("start of insert_sc1_rate_detail")
+    session = get_session()
+    try:
+        detail = SC1RateDetails(**data)
+        session.add(detail)
+        session.commit()
+        logger.info(f"✅ Inserted SC1 Rate Detail for Classification ID {data.get('service_classification_id')}")
+        return detail.id
+    except SQLAlchemyError as e:
+        logger.error(f"❌ Failed to insert SC1 Rate Detail: {e}")
+        session.rollback()
+        return None
+    finally:
+        session.close()
+
+
+def fetch_all_service_classifications():
+    """Fetch all service classifications."""
+    session = get_session()
+    try:
+        results = session.query(ServiceClassification).all()
+        return results
+    except SQLAlchemyError as e:
+        logger.error(f"❌ Failed to fetch service classifications: {e}")
+        return []
+    finally:
+        session.close()
+
+
+def fetch_sc1_rates_by_classification(sc_id: int):
+    """Fetch all SC1 Rate Details for a specific classification id."""
+    session = get_session()
+    try:
+        results = session.query(SC1RateDetails).filter_by(service_classification_id=sc_id).all()
+        return results
+    except SQLAlchemyError as e:
+        logger.error(f"❌ Failed to fetch SC1 rate details for ID {sc_id}: {e}")
+        return []
+    finally:
+        session.close()

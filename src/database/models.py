@@ -4,6 +4,7 @@
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+from sqlalchemy import ForeignKey
 
 Base = declarative_base()
 
@@ -87,3 +88,25 @@ class UserBills(Base):
     retracted_amt = Column(Float)
     sales_tax_factor = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+
+class ServiceClassification(Base):
+    __tablename__ = "service_classification"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(10), nullable=False, unique=True)
+    description = Column(Text)
+
+class SC1RateDetails(Base):
+    __tablename__ = "sc1_rate_details"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    service_classification_id = Column(Integer, ForeignKey('service_classification.id'))
+    effective_date = Column(Date)
+    basic_service_charge = Column(Float)
+    monthly_minimum_charge = Column(Float)
+    energy_rate_all_hours = Column(Float)
+    on_peak = Column(Float)
+    off_peak = Column(Float)
+    super_peak = Column(Float)
+    distribution_delivery = Column(String(50))
+

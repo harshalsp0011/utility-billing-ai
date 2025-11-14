@@ -34,3 +34,11 @@ AIRFLOW_API_URL = os.getenv("AIRFLOW_API_URL", "http://localhost:8080/api/v2")
 AIRFLOW_API_USER = os.getenv("AIRFLOW_API_USER")
 AIRFLOW_API_PASSWORD = os.getenv("AIRFLOW_API_PASSWORD")
 AIRFLOW_DAG_ID = os.getenv("AIRFLOW_DAG_ID", "utility_billing_pipeline")
+
+
+
+# -------------------------
+# LLM Configuration
+# -------------------------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")

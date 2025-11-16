@@ -1,6 +1,6 @@
 import os
 from openai import OpenAI
-from src.config import OPENAI_API_KEY, OPENAI_MODEL
+from src.utils.config import OPENAI_API_KEY, OPENAI_MODEL
 
 class LLMClient:
     def __init__(self, api_key=OPENAI_API_KEY, model=OPENAI_MODEL):

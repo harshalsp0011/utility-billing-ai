@@ -3,25 +3,40 @@ import json
 from datetime import datetime
 
 import pandas as pd
-import psycopg2
-from openai import OpenAI
+from sqlalchemy import text
+from src.utils.llm_client import LLMClient
+from src.utils.config import OPENAI_API_KEY, OPENAI_MODEL
+from src.database.db_utils import get_engine, insert_validation_result, fetch_user_bills
 
 # ============= CONFIG =============
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL_NAME = "gpt-4.1-mini"          # change if you like
+# Use centralized config values (from src.utils.config)
 MAX_BILLS_PER_REQUEST = 24           # keep prompts manageable
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = LLMClient(api_key=OPENAI_API_KEY, model=OPENAI_MODEL)
 
-# Postgres connection defaults – override in __main__ if needed
-PG_DEFAULTS = dict(
-    dbname="utility_billing",
-    user="postgres",
-    password="your_password",        # <-- change this
-    host="localhost",
-    port=5432,
-)
+# Example: direct insert helpers you can call from scripts or REPL
+# Use these helpers to write single records without manual SQL.
+#
+# from src.database.db_utils import insert_user_bill, insert_validation_result
+#
+# Example: insert a validation result directly:
+# insert_validation_result({
+#     "account_id": "ACCT-9981",
+#     "user_bill_id": 4,
+#     "issue_type": "Usage Spike",
+#     "description": "KWh increased by 62% vs last month — anomaly detected.",
+#     "status": "open",
+# })
+
+# Example: insert a single user bill record:
+# insert_user_bill({
+#     "bill_account": "ACCT-9981",
+#     "customer": "Example Customer",
+#     "bill_date": "2025-09-01",
+#     "billed_kwh": 123.4,
+#     "bill_amount": 45.67,
+# })
 
 # ============= LLM SYSTEM PROMPT =============
 
@@ -134,40 +149,29 @@ Answer with ONLY this JSON object and no extra commentary.
 
 # ============= DB HELPERS =============
 
-def load_user_bills_from_postgres(
-    bill_account: str,
-    dbname: str,
-    user: str,
-    password: str,
-    host: str = "localhost",
-    port: int = 5432,
-    limit_rows: int | None = None,
-) -> pd.DataFrame:
-    """
-    Load billing history for a single bill_account from user_bills.
-    """
-    conn = psycopg2.connect(
-        dbname=dbname,
-        user=user,
-        password=password,
-        host=host,
-        port=port,
-    )
+def load_user_bills_from_db(bill_account: str, limit_rows: int | None = None) -> pd.DataFrame:
+    """Load billing history for a single bill_account by reusing db_utils.fetch_user_bills.
 
-    query = """
-        SELECT *
-        FROM user_bills
-        WHERE bill_account = %s
-        ORDER BY bill_date
+    fetch_user_bills returns a limited set of recent UserBills rows; we filter the
+    returned DataFrame for the requested `bill_account`. If `limit_rows` is not
+    provided, a sensible large default is used to increase the chance the account
+    appears in the result set.
     """
-    params = (bill_account,)
+    # Use a reasonable default ceiling so fetch_user_bills returns enough history
+    default_limit = 1000
+    limit = limit_rows if limit_rows is not None else default_limit
 
-    if limit_rows is not None:
-        query += " LIMIT %s"
-        params = (bill_account, limit_rows)
+    df = fetch_user_bills(limit=limit)
+    if df.empty:
+        return df
 
-    df = pd.read_sql(query, conn, params=params)
-    conn.close()
+    # Filter by bill_account column and sort by bill_date to preserve ordering
+    if "bill_account" in df.columns:
+        df = df[df["bill_account"] == bill_account].sort_values("bill_date")
+    else:
+        # If schema differs, return empty DataFrame to signal nothing found
+        return pd.DataFrame()
+
     return df
 
 
@@ -229,83 +233,56 @@ def call_llm_for_validation(bills: list[dict]) -> dict:
     """
     Call the OpenAI chat model and parse the JSON response.
     """
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": build_user_prompt(bills)},
-    ]
+    # Combine system prompt and user prompt into a single prompt string
+    full_prompt = SYSTEM_PROMPT.strip() + "\n\n" + build_user_prompt(bills)
 
-    resp = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=messages,
-        response_format={"type": "json_object"},
-        temperature=0.0,
-    )
+    # Use the project's LLM client which returns the raw string content
+    resp_text = client.ask(full_prompt, temperature=0.0)
 
-    content = resp.choices[0].message.content
-    return json.loads(content)
+    # Try to parse JSON directly; if the model returns extra text, attempt
+    # to extract the first JSON object substring.
+    try:
+        return json.loads(resp_text)
+    except Exception:
+        # Attempt to find first '{' and last '}' and parse that slice
+        try:
+            start = resp_text.find('{')
+            end = resp_text.rfind('}')
+            if start != -1 and end != -1 and end > start:
+                return json.loads(resp_text[start:end+1])
+        except Exception:
+            pass
+        raise RuntimeError("Failed to parse JSON from LLM response")
 
 
 # ============= SAVE TO validation_results =============
 
-def save_llm_anomalies_to_validation_results(
-    anomalies: dict,
-    account_id: str,
-    dbname: str,
-    user: str,
-    password: str,
-    host: str = "localhost",
-    port: int = 5432,
-):
-    """
-    Save LLM anomalies into validation_results table.
-    Expects validation_results to have columns:
-      id (serial), account_id, user_bill_id, issue_type, description, detected_on, status
-    """
-    conn = psycopg2.connect(
-        dbname=dbname,
-        user=user,
-        password=password,
-        host=host,
-        port=port,
-    )
-    cur = conn.cursor()
+def save_llm_anomalies_to_validation_results(anomalies: dict, account_id: str):
+    """Save LLM anomalies into the `validation_results` table using `insert_validation_result`.
 
+    Delegate insertion to `src.database.db_utils.insert_validation_result` so
+    session handling and logging remain centralized.
+    """
     for bill_entry in anomalies.get("bill_anomalies", []):
-        user_bill_id = bill_entry.get("bill_id")  # equals user_bills.id
-
+        user_bill_id = bill_entry.get("bill_id")
         for a in bill_entry.get("anomalies", []):
-            issue_type = a.get("rule_id")
-            description = a.get("message")
-            detected_on = datetime.utcnow()
+            record = {
+                "account_id": account_id,
+                "user_bill_id": user_bill_id,
+                "issue_type": a.get("rule_id"),
+                "description": a.get("message"),
+                "detected_on": datetime.utcnow(),
+                "status": "new",
+            }
+            insert_validation_result(record)
 
-            cur.execute(
-                """
-                INSERT INTO validation_results
-                  (account_id, user_bill_id, issue_type, description, detected_on, status)
-                VALUES (%s, %s, %s, %s, %s, %s);
-                """,
-                (
-                    account_id,
-                    user_bill_id,
-                    issue_type,
-                    description,
-                    detected_on,
-                    "new",
-                ),
-            )
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    print("LLM anomalies saved to validation_results with user_bill_id.")
+    print("LLM anomalies saved to validation_results via db_utils.insert_validation_result.")
 
 
 # ============= HIGH-LEVEL PIPELINE =============
 
 def validate_account_with_llm(
     bill_account: str,
-    db_kwargs: dict,
 ) -> dict:
     """
     Full pipeline for a single bill_account:
@@ -316,7 +293,8 @@ def validate_account_with_llm(
       5. Return anomalies dict
     """
     print(f"Loading bills for account {bill_account} ...")
-    df = load_user_bills_from_postgres(bill_account, **db_kwargs)
+    # Use the project's db_utils engine to load bills for the account
+    df = load_user_bills_from_db(bill_account)
 
     if df.empty:
         raise ValueError(f"No bills found in user_bills for account_id={bill_account}")
@@ -331,11 +309,7 @@ def validate_account_with_llm(
     anomalies = call_llm_for_validation(bills)
 
     print("Saving anomalies to validation_results ...")
-    save_llm_anomalies_to_validation_results(
-        anomalies,
-        account_id=bill_account,
-        **db_kwargs,
-    )
+    save_llm_anomalies_to_validation_results(anomalies, account_id=bill_account)
 
     return anomalies
 
@@ -349,10 +323,7 @@ if __name__ == "__main__":
     # Change this to whichever account you want to validate
     BILL_ACCOUNT = "YOUR_ACCOUNT_ID_HERE"
 
-    anomalies = validate_account_with_llm(
-        BILL_ACCOUNT,
-        db_kwargs=PG_DEFAULTS,
-    )
+    anomalies = validate_account_with_llm(BILL_ACCOUNT)
 
     # Optional: print output JSON nicely
     print(json.dumps(anomalies, indent=2))

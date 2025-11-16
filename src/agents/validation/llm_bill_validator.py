@@ -1,12 +1,22 @@
 import os
 import json
 from datetime import datetime
+from pathlib import Path
+import sys
+
+# When running this module directly (python src/agents/validation/llm_bill_validator.py)
+# ensure the repository root is on sys.path so `from src...` imports resolve.
+# The file is at <repo>/src/agents/validation/llm_bill_validator.py, so parents[3]
+# points to the repository root.
+repo_root = str(Path(__file__).resolve().parents[3])
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
 
 import pandas as pd
 from sqlalchemy import text
 from src.utils.llm_client import LLMClient
 from src.utils.config import OPENAI_API_KEY, OPENAI_MODEL
-from src.database.db_utils import get_engine, insert_validation_result, fetch_user_bills
+from src.database.db_utils import get_engine, insert_validation_result, fetch_user_bills,insert_bill_validation_result
 from src.utils.logger import get_logger
 
 
@@ -15,7 +25,12 @@ logger = get_logger(__name__)
 # ============= CONFIG =============
 
 
-client = LLMClient(api_key=OPENAI_API_KEY, model=OPENAI_MODEL)
+try:
+    client = LLMClient(api_key=OPENAI_API_KEY, model=OPENAI_MODEL)
+    logger.info("LLM client initialized with model=%s", OPENAI_MODEL)
+except Exception as e:
+    client = None
+    logger.error("Failed to initialize LLM client: %s", e)
 
 # Example: direct insert helpers you can call from scripts or REPL
 # Use these helpers to write single records without manual SQL.
@@ -163,16 +178,16 @@ def load_user_bills_from_db(bill_account: str, limit_rows: int | None = None) ->
     #default_limit = 1000
     #limit = limit_rows if limit_rows is not None else default_limit
 
-    df = fetch_user_bills()
+    logger.info("Fetching user bills (DB filter) for account=%s", bill_account)
+    df = fetch_user_bills(bill_account)
     if df.empty:
+        logger.warning("fetch_user_bills returned empty DataFrame")
         return df
 
-    # Filter by bill_account column and sort by read_date to preserve ordering
-    if "bill_account" in df.columns:
-        df = df[df["bill_account"] == bill_account].sort_values("read_date")
-    else:
-        # If schema differs, return empty DataFrame to signal nothing found
-        return pd.DataFrame()
+    # Sort by read_date to preserve ordering if present
+    if "read_date" in df.columns:
+        df = df.sort_values("read_date")
+    logger.info("Found %d rows for account %s", len(df), bill_account)
 
     return df
 
@@ -212,6 +227,7 @@ def dataframe_to_bill_dicts(df: pd.DataFrame) -> list[dict]:
         )
 
     return records
+    logger.info("Converted %d DataFrame rows to bill dicts", len(records))
 
 
 # ============= LLM CALL HELPERS =============
@@ -228,6 +244,7 @@ def build_user_prompt(bills: list[dict]) -> str:
         f"{bills_json}\n"
         "```\n"
     )
+    logger.debug("Built user prompt for %d bills (len=%d)", len(bills), len(bills_json))
     return prompt
 
 
@@ -238,22 +255,36 @@ def call_llm_for_validation(bills: list[dict]) -> dict:
     # Combine system prompt and user prompt into a single prompt string
     full_prompt = SYSTEM_PROMPT.strip() + "\n\n" + build_user_prompt(bills)
 
+    if client is None:
+        logger.error("LLM client is not initialized; cannot call LLM")
+        raise RuntimeError("LLM client not available")
+
+    logger.info("Calling LLM for validation with %d bills", len(bills))
     # Use the project's LLM client which returns the raw string content
     resp_text = client.ask(full_prompt, temperature=0.0)
+    logger.debug("LLM raw response length: %d", len(str(resp_text)))
 
     # Try to parse JSON directly; if the model returns extra text, attempt
     # to extract the first JSON object substring.
     try:
-        return json.loads(resp_text)
-    except Exception:
+        parsed = json.loads(resp_text)
+        logger.info("Parsed JSON from LLM response successfully")
+        return parsed
+    except Exception as e:
+        logger.warning("Direct JSON parse failed: %s", e)
         # Attempt to find first '{' and last '}' and parse that slice
         try:
             start = resp_text.find('{')
             end = resp_text.rfind('}')
             if start != -1 and end != -1 and end > start:
-                return json.loads(resp_text[start:end+1])
-        except Exception:
-            pass
+                candidate = resp_text[start:end+1]
+                parsed = json.loads(candidate)
+                logger.info("Parsed JSON after extracting substring")
+                return parsed
+            else:
+                logger.error("Could not locate JSON object in LLM output. Raw output:\n%s", resp_text)
+        except Exception as e2:
+            logger.error("Failed to parse JSON from LLM response: %s", e2)
         raise RuntimeError("Failed to parse JSON from LLM response")
 
 
@@ -265,6 +296,7 @@ def save_llm_anomalies_to_validation_results(anomalies: dict, account_id: str):
     Delegate insertion to `src.database.db_utils.insert_validation_result` so
     session handling and logging remain centralized.
     """
+    total_saved = 0
     for bill_entry in anomalies.get("bill_anomalies", []):
         user_bill_id = bill_entry.get("bill_id")
         for a in bill_entry.get("anomalies", []):
@@ -276,9 +308,14 @@ def save_llm_anomalies_to_validation_results(anomalies: dict, account_id: str):
                 "detected_on": datetime.utcnow(),
                 "status": "new",
             }
-            insert_validation_result(record)
+            try:
+                insert_bill_validation_result(record)
+                logger.info("inserted anomaly for bill_id=%s, rule_id=%s", user_bill_id, a.get("rule_id"))
+                total_saved += 1
+            except Exception as e:
+                logger.error("Failed to insert validation result for bill_id=%s: %s", user_bill_id, e)
 
-    print("LLM anomalies saved to validation_results via db_utils.insert_validation_result.")
+    logger.info("Saved %d LLM anomalies to validation_results for account=%s", total_saved, account_id)
 
 
 # ============= HIGH-LEVEL PIPELINE =============
@@ -294,11 +331,12 @@ def validate_account_with_llm(
       4. Save anomalies to validation_results
       5. Return anomalies dict
     """
-    print(f"Loading bills for account {bill_account} ...")
+    logger.info("Starting LLM validation pipeline for account=%s", bill_account)
     # Use the project's db_utils engine to load bills for the account
     df = load_user_bills_from_db(bill_account)
 
     if df.empty:
+        logger.warning("No bills found in user_bills for account_id=%s", bill_account)
         raise ValueError(f"No bills found in user_bills for account_id={bill_account}")
 
     bills = dataframe_to_bill_dicts(df)
@@ -307,12 +345,13 @@ def validate_account_with_llm(
     #if len(bills) > MAX_BILLS_PER_REQUEST:
      #   bills = bills[-MAX_BILLS_PER_REQUEST:]
 
-    print(f"Calling LLM for {len(bills)} bills ...")
+    logger.info("Calling LLM for %d bills", len(bills))
     anomalies = call_llm_for_validation(bills)
 
-    print("Saving anomalies to validation_results ...")
+    logger.info("Saving anomalies to validation_results for account=%s", bill_account)
     save_llm_anomalies_to_validation_results(anomalies, account_id=bill_account)
 
+    logger.info("Completed LLM validation for account=%s; anomalies summary: %s", bill_account, json.dumps(anomalies.get("summary", {})))
     return anomalies
 
 
@@ -323,7 +362,7 @@ if __name__ == "__main__":
         raise RuntimeError("OPENAI_API_KEY not set in environment.")
 
     # Change this to whichever account you want to validate
-    BILL_ACCOUNT = "YOUR_ACCOUNT_ID_HERE"
+    BILL_ACCOUNT = "1031293107"
 
     anomalies = validate_account_with_llm(BILL_ACCOUNT)
 

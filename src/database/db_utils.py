@@ -344,18 +344,42 @@ def insert_user_bills_bulk(df: pd.DataFrame):
         session.close()
 
 
-def fetch_user_bills():
-    """Fetch limited UserBills rows for review."""
+from sqlalchemy import text
+
+def fetch_user_bills(account_id: str | None = None):
+    """Fetch UserBills rows as a DataFrame.
+
+    Avoids pandas' SQL helper to prevent DBAPI cursor issues across
+    pandas/SQLAlchemy versions by using SQLAlchemy execute + mappings().
+    Optionally filters by `bill_account` if `account_id` is provided.
+    """
+    logger.info("start of fetch_user_bills")
     engine = get_engine()
+
     try:
         with engine.connect() as connection:
-            df = pd.read_sql(f"SELECT * FROM user_bills ", connection)
+            if account_id:
+                stmt = text("SELECT * FROM user_bills WHERE bill_account = :acct")
+                result = connection.execute(stmt, {"acct": account_id})
+            else:
+                result = connection.execute(text("SELECT * FROM user_bills"))
+
+            try:
+                rows = result.mappings().all()
+                df = pd.DataFrame(rows)
+            except Exception:
+                rows = result.fetchall()
+                df = pd.DataFrame(rows, columns=result.keys())
+
         logger.info(f"📊 Fetched {len(df)} UserBills rows.")
         return df
     except Exception as e:
         logger.error(f"❌ Failed to fetch UserBills: {e}")
         return pd.DataFrame()
-    logger.info("end of fetch_user_bills")
+    finally:
+        logger.info("end of fetch_user_bills")
+
+
 
 
 

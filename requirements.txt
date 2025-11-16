@@ -22,7 +22,7 @@ appnope==0.1.4
 argcomplete==3.6.2
 asgiref==3.10.0
 asttokens==3.0.0
-async-timeout==5.0.1
+#async-timeout==5.0.1
 attrs==25.4.0
 Babel==2.14.0
 backoff==2.2.1

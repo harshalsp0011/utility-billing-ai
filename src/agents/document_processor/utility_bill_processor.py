@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 # Strong cleanup + diagnostics so we can see why rows were zero.
 
 # Define your file name and directory
-PDF_FILENAME = "National Grid Usage Statement-With Overcharge.pdf"
+PDF_FILENAME = "temp_bill.pdf"
 INPUT_PDF = get_file_path("raw", PDF_FILENAME)
 
 DEST_COLS = [
@@ -280,7 +280,8 @@ def process_bill(pdf_path: Path):
         if c not in df_out.columns: df_out[c] = ""
     df_out = df_out[DEST_COLS]
 
-    df_out["Inserted At"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # keep a human-readable timestamp column in the DataFrame if needed
+    df_out["Inserted At"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
     # Normalize and convert types before inserting into DB
     def _to_optional_float(val):
@@ -336,7 +337,8 @@ def process_bill(pdf_path: Path):
             "bill_amount_with_sales_tax": _to_optional_float(row.get("Bill Amount w/Sales Tax")),
             "retracted_amt": _to_optional_float(row.get("Retracted Amt")),
             "sales_tax_factor": _to_optional_float(row.get("Sales Tax Factor")),
-            "inserted_at": datetime.now(),
+            # Match the ORM field name `created_at` in `UserBills` model
+            "created_at": datetime.utcnow(),
         }
         try:
             insert_user_bill(record)

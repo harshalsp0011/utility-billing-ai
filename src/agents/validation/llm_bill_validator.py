@@ -7,11 +7,13 @@ from sqlalchemy import text
 from src.utils.llm_client import LLMClient
 from src.utils.config import OPENAI_API_KEY, OPENAI_MODEL
 from src.database.db_utils import get_engine, insert_validation_result, fetch_user_bills
+from src.utils.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 # ============= CONFIG =============
 
-# Use centralized config values (from src.utils.config)
-MAX_BILLS_PER_REQUEST = 24           # keep prompts manageable
 
 client = LLMClient(api_key=OPENAI_API_KEY, model=OPENAI_MODEL)
 
@@ -33,7 +35,7 @@ client = LLMClient(api_key=OPENAI_API_KEY, model=OPENAI_MODEL)
 # insert_user_bill({
 #     "bill_account": "ACCT-9981",
 #     "customer": "Example Customer",
-#     "bill_date": "2025-09-01",
+#     "read_date": "2025-09-01",
 #     "billed_kwh": 123.4,
 #     "bill_amount": 45.67,
 # })
@@ -158,16 +160,16 @@ def load_user_bills_from_db(bill_account: str, limit_rows: int | None = None) ->
     appears in the result set.
     """
     # Use a reasonable default ceiling so fetch_user_bills returns enough history
-    default_limit = 1000
-    limit = limit_rows if limit_rows is not None else default_limit
+    #default_limit = 1000
+    #limit = limit_rows if limit_rows is not None else default_limit
 
-    df = fetch_user_bills(limit=limit)
+    df = fetch_user_bills()
     if df.empty:
         return df
 
-    # Filter by bill_account column and sort by bill_date to preserve ordering
+    # Filter by bill_account column and sort by read_date to preserve ordering
     if "bill_account" in df.columns:
-        df = df[df["bill_account"] == bill_account].sort_values("bill_date")
+        df = df[df["bill_account"] == bill_account].sort_values("read_date")
     else:
         # If schema differs, return empty DataFrame to signal nothing found
         return pd.DataFrame()
@@ -188,9 +190,9 @@ def dataframe_to_bill_dicts(df: pd.DataFrame) -> list[dict]:
                 # direct link back to user_bills.id
                 "bill_id": int(row["id"]),
 
-                # We only know bill_date reliably; treat as period_end
+                # We only know read_date reliably; treat as period_end
                 "period_start": None,
-                "period_end": row.get("bill_date"),
+                "period_end": row.get("read_date"),
 
                 "bill_days": row.get("days_used"),
                 "kwh_usage": row.get("billed_kwh"),
@@ -302,8 +304,8 @@ def validate_account_with_llm(
     bills = dataframe_to_bill_dicts(df)
 
     # Limit number of bills per request to keep prompt small
-    if len(bills) > MAX_BILLS_PER_REQUEST:
-        bills = bills[-MAX_BILLS_PER_REQUEST:]
+    #if len(bills) > MAX_BILLS_PER_REQUEST:
+     #   bills = bills[-MAX_BILLS_PER_REQUEST:]
 
     print(f"Calling LLM for {len(bills)} bills ...")
     anomalies = call_llm_for_validation(bills)

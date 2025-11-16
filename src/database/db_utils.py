@@ -344,12 +344,12 @@ def insert_user_bills_bulk(df: pd.DataFrame):
         session.close()
 
 
-def fetch_user_bills(limit: int = 10):
+def fetch_user_bills():
     """Fetch limited UserBills rows for review."""
     engine = get_engine()
     try:
         with engine.connect() as connection:
-            df = pd.read_sql(f"SELECT * FROM user_bills LIMIT {limit}", connection)
+            df = pd.read_sql(f"SELECT * FROM user_bills ", connection)
         logger.info(f"📊 Fetched {len(df)} UserBills rows.")
         return df
     except Exception as e:

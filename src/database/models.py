@@ -50,6 +50,21 @@ class ValidationResult(Base):
     status = Column(String(50), default="open")
 
 
+
+class BillValidationResult(Base):
+    """
+    Stores error detection, validation, and anomaly findings.
+    """
+    __tablename__ = "bill_validation_results"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    account_id = Column(String(100))
+    user_bill_id = Column(Integer, ForeignKey("user_bills.id"))
+    issue_type = Column(String(255))
+    description = Column(Text)
+    detected_on = Column(DateTime, default=datetime.utcnow)
+    status = Column(String(50), default="open")
+
 class PipelineRun(Base):
     """
     Tracks every workflow/DAG execution event.

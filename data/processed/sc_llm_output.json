@@ -1,0 +1,241 @@
+{
+  "SC1": {
+    "tariff_entries": [
+      {
+        "label": "Basic Service Charge",
+        "value": "$19.00",
+        "unit": "monthly"
+      },
+      {
+        "label": "Per kWh",
+        "value": "$0.08889",
+        "unit": "per kWh"
+      },
+      {
+        "label": "MONTHLY MINIMUM CHARGE",
+        "value": "$19.00",
+        "unit": "monthly"
+      }
+    ],
+    "eligibility_short": {
+      "applies_if_all_true": [
+        "Single phase residential purposes in an individual residence",
+        "Single phase residential purposes in an individual flat or apartment in a multiple family dwelling",
+        "Residential purposes in a multiple occupancy building with not more than two individual flats, apartments or divided living spaces",
+        "Residential purposes in a rooming house with not more than four rooms available for rent",
+        "Single or three phase service to premises owned or leased by not-for-profit corporations for religious purposes",
+        "Single phase farm service supplied through the farm residence meter",
+        "Single or three phase service primarily in connection with a community residence operated by a not-for-profit corporation as defined in the Mental Hygiene Law",
+        "Posts and halls owned or leased by a not-for-profit veterans' organization",
+        "Use predominantly or primarily in connection with religious purposes by corporations or associations organized and conducted in good faith for religious purposes"
+      ],
+      "does_not_apply_if_true": [
+        "Premises use is not predominantly for religious purposes or reasonably incidental to religious purposes",
+        "Non-religious uses predominate and cannot be physically segregated and separately metered"
+      ]
+    }
+  },
+  "SC1C": {
+    "tariff_entries": [
+      {
+        "label": "Basic Service Charge",
+        "value": "$30.62",
+        "unit": "monthly"
+      },
+      {
+        "label": "Per kWh",
+        "value": "$0.03649",
+        "unit": "per kWh"
+      },
+      {
+        "label": "MONTHLY MINIMUM CHARGE",
+        "value": "$30.62",
+        "unit": "monthly"
+      }
+    ],
+    "eligibility_short": {
+      "applies_if_all_true": [
+        "Single or three phase residential purposes at the option of customers who would otherwise be served under Service Classification No. 1",
+        "Use to an individual residence, a flat or apartment in a multiple family dwelling",
+        "Residential purposes in a multiple occupancy building where not more than two individual flats, apartments or divided living spaces are available",
+        "Residential purposes in a roominghouse where not more than four rooms are available for rent",
+        "Farm service when supplied through the farm residence meter",
+        "Single or three phase service to any premise owned or leased by any not-for-profit corporation association or body organized and conducted in good faith for religious purposes and used primarily or principally in connection with such religious purposes",
+        "Use primarily and principally in connection with a community residence as defined in the Mental Hygiene Law operated by a not-for-profit corporation and either a supervised living facility providing 24-hour per day on-site supervision and living accommodations for 14 or fewer residents or a supportive living facility providing supervised independent living without 24-hour per day on-site supervision",
+        "Posts and halls owned or leased by a not-for-profit corporation that is a veterans' organization",
+        "Available throughout the Company's service area from existing circuits of adequate capacity and appropriate character",
+        "Subject to availability of suitable metering equipment and continuous Company access including bimonthly access to the meter to record usage",
+        "Written application upon the Company's prescribed forms may be required"
+      ],
+      "does_not_apply_if_true": []
+    }
+  },
+  "SC2": {
+    "tariff_entries": [
+      {
+        "label": "Basic Service Charge",
+        "value": "$25.00",
+        "unit": "monthly"
+      },
+      {
+        "label": "Basic Service Charge",
+        "value": "$29.42",
+        "unit": "monthly"
+      },
+      {
+        "label": "MONTHLY MINIMUM CHARGE",
+        "value": "$25.00",
+        "unit": "monthly"
+      },
+      {
+        "label": "Special Provision O",
+        "value": "$29.42",
+        "unit": "monthly"
+      }
+    ],
+    "eligibility_short": {
+      "applies_if_all_true": [
+        "All purposes required by customer on the premises for which no other service classification is specifically provided",
+        "Entire requirements are delivered at one point and singly metered at the delivery voltage (except as provided in Special Provision C)",
+        "Available throughout the Company's service area from existing circuits of adequate capacity and appropriate character"
+      ],
+      "does_not_apply_if_true": []
+    },
+    "classification_shift_rules": [
+      "A customer once served under this service classification shall remain on this service classification until the monthly measured demand exceeds 100 kW for twelve consecutive months following the initial term of service, except as provided in Special Provision I, whereupon service may be taken under another appropriate service classification"
+    ],
+    "change_of_classification_conditions": [
+      "Remain on this service classification until the monthly measured demand exceeds 100 kW for twelve consecutive months following the initial term of service"
+    ]
+  },
+  "SC2D": {
+    "tariff_entries": [
+      {
+        "label": "Basic Service Charge",
+        "value": "$65.00",
+        "unit": "monthly"
+      },
+      {
+        "label": "Special Provision P",
+        "value": "$90.10",
+        "unit": "per kW"
+      },
+      {
+        "label": "Special Provision P",
+        "value": "$107.09",
+        "unit": "per kW"
+      },
+      {
+        "label": "Monthly Minimum Charge",
+        "value": "$81.99",
+        "unit": "monthly"
+      }
+    ],
+    "eligibility_short": {
+      "applies_if_all_true": [
+        "Customer provides a load letter (load sheet) upon request",
+        "Charging Ratio determined at time of application and remains until updated by customer"
+      ],
+      "does_not_apply_if_true": []
+    }
+  },
+  "SC3": {
+    "tariff_entries": [
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$775.00",
+        "unit": "monthly"
+      },
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$850.00",
+        "unit": "monthly"
+      },
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$1,430.00",
+        "unit": "monthly"
+      },
+      {
+        "label": "incremental customer charge",
+        "value": "$25.10",
+        "unit": "monthly"
+      }
+    ],
+    "eligibility_short": {
+      "applies_if_all_true": [
+        "All requirements delivered at one Retail Delivery Point and singly metered with respect to the delivery voltage",
+        "Monthly measured demand has equaled or exceeded 100 kW in each of the previous twelve months",
+        "Or in the Company's opinion the applicant's demand will equal or exceed 100 kW in twelve consecutive months",
+        "Available throughout the Company's service area from existing circuits of adequate capacity and appropriate character"
+      ],
+      "does_not_apply_if_true": [
+        "Monthly measured demand has been less than 100 kW for twelve consecutive months following the initial Term of Service"
+      ]
+    },
+    "change_of_classification_conditions": [
+      "Customer once served under this service classification shall remain on this service classification until the monthly measured demand has been less than 100 kW for twelve consecutive months following the initial Term of Service"
+    ]
+  },
+  "SC3A": {
+    "tariff_entries": [
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$3,525.00",
+        "unit": "per kW"
+      },
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$4,350.00",
+        "unit": "per kW"
+      },
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$8,800.00",
+        "unit": "per kW"
+      },
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$14.07",
+        "unit": "per kW"
+      },
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$4.97",
+        "unit": "per kW"
+      },
+      {
+        "label": "Distribution Delivery Charge",
+        "value": "$4.36",
+        "unit": "per kW"
+      },
+      {
+        "label": "All Delivery Voltages Reactive Demand Charge",
+        "value": "$1.02",
+        "unit": "per kVA"
+      }
+    ],
+    "effective_dates": [
+      "September 1, 1998",
+      "July 1, 2013"
+    ],
+    "latest_effective_date": "July 1, 2013",
+    "eligibility_short": {
+      "applies_if_all_true": [
+        "Service available throughout the Company's service area from existing circuits of adequate capacity and appropriate character",
+        "Service provided for all purposes required by a customer on the premises",
+        "Entire requirements delivered at one Retail Delivery Point and singly metered with respect to the delivery voltage"
+      ],
+      "does_not_apply_if_true": []
+    },
+    "classification_shift_rules": [
+      "Customer once served under SC-3A shall remain on this service classification until monthly measured demand falls below specified thresholds for a consecutive number of months",
+      "Customers receiving SC-4 Supplemental Service assigned to parent service classifications based on prior SC-3A service and demand thresholds"
+    ],
+    "change_of_classification_conditions": [
+      "SC-3A before September 1, 1998: Monthly demand exceeds 2,000 kW in any two consecutive months of previous twelve months triggers classification; remain until demand is 1,500 kW or less for twelve consecutive months",
+      "SC-3A after September 1, 1998: Monthly demand exceeds 2,000 kW in any six consecutive months of previous twelve months triggers classification; remain until demand is 1,800 kW or less for six consecutive months",
+      "Effective July 1, 2013, billed demands for Niagara Power Delivery Service included in demand calculations"
+    ]
+  }
+}

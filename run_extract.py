@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from pypdf import PdfReader
-from src.agents.tariff_analysis.json_converter import extract_scheme
+from src.agents.tariff_analysis.sc_llm_extractor import extract_scheme
 
 # Path to the extracted SC1 PDF
 pdf_path = Path('data/processed/SC1_raw.pdf')

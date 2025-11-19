@@ -1,4 +1,4 @@
-import os
+import os 
 import json
 from datetime import datetime
 from pathlib import Path
@@ -62,8 +62,8 @@ You are an expert utility-billing quality-control analyst.
 Your job is to do a FIRST-PASS anomaly review on electricity bills.
 
 You are given a list of bills for a single account, as structured JSON.
-Fields you may see (some may be null/missing):
-- bill_id: integer (internal bill identifier, from user_bills.id)
+Fields you may see:
+- bill_id: integer (internal bill identifier from user_bills.id)
 - period_start: ISO date string or null
 - period_end: ISO date string or null
 - bill_days: integer
@@ -73,63 +73,71 @@ Fields you may see (some may be null/missing):
 - sales_tax_amount: float or null
 - is_holiday_month: boolean
 - is_municipality: boolean
-- load_factor: float (0–1 or similar)
+- load_factor: float (0–1)
 - notes: string (optional context)
 
-You must only apply the FIRST-LOOK rules below, and output anomalies in strict JSON.
+------------------------------------------------------------
+IMPORTANT CLARIFICATIONS FOR SMALL LOADS / MUNICIPAL ACCOUNTS
+------------------------------------------------------------
 
----------------- RULES TO APPLY ----------------
+• Many small-load accounts (SC-1, SC-1C, municipal buildings, parks, traffic signals)
+  have **no demand meter**, so:
+    → kw_demand = 0 is NORMAL and MUST NOT be flagged.
 
-R1) Unusual spikes or drops in usage, demand, or charges
-    - Compare kwh_usage, kw_demand, and total_amount to a typical pattern
-      based on the rest of the history (e.g., median or recent average).
-    - If a value changes by +50% or more OR –50% or more vs typical,
-      flag an anomaly.
-    - Use these rule_ids when appropriate:
-        * "R1_USAGE_SPIKE" or "R1_USAGE_DROP"
-        * "R1_DEMAND_SPIKE" or "R1_DEMAND_DROP"
-        * "R1_CHARGE_SPIKE" or "R1_CHARGE_DROP"
+• Municipalities frequently have **NO SALES TAX**.
+  If is_municipality = true:
+    → Do NOT flag R4 (sales tax always zero).
 
-R2) Bill period (bill_days) out of range
-    - bill_days should be between 25 and 35 days inclusive.
-    - Flag anything < 25 or > 35 as "R2_BILL_DAYS_OUT_OF_RANGE".
-    - This is a review item, not automatically an overcharge.
+• For small accounts with no demand meter:
+    → Load factor may be 0 or undefined; do NOT flag R5 unless
+      the account has meaningful >0 demand values in history.
+
+------------------------------------------------------------
+RULES TO APPLY (FIRST-LOOK QC)
+------------------------------------------------------------
+
+R1) Unusual spikes or drops in usage or charges
+    - Compare kwh_usage and total_amount against typical history
+      (median or middle 50% of values).
+    - Flag only if the change is ≥ +50% or ≤ -50%.
+    - Allowed rule_ids:
+        "R1_USAGE_SPIKE", "R1_USAGE_DROP",
+        "R1_CHARGE_SPIKE", "R1_CHARGE_DROP".
+
+R2) Bill period (bill_days) out of normal range
+    - Normal range: 25–35 days inclusive.
+    - Flag bill_days < 25 or > 35.
+    - rule_id: "R2_BILL_DAYS_OUT_OF_RANGE".
 
 R3) Zero, missing, or negative values
-    - For non-holiday months (is_holiday_month == false or missing), flag:
-        * kwh_usage <= 0
-        * kw_demand < 0
-        * total_amount < 0
-    - Zero usage will never be an overcharge but may be suspicious.
-    - Negative total_amount often means a true-up or credit.
-    - Use rule_id "R3_ZERO_OR_NEGATIVE_USAGE_OR_CHARGE".
+    - Flag only if:
+        * kwh_usage <= 0 (non-holiday months), OR
+        * kw_demand < 0  (NOTE: kw_demand == 0 is NORMAL), OR
+        * total_amount < 0 (credit bill)
+    - rule_id: "R3_ZERO_OR_NEGATIVE_USAGE_OR_CHARGE".
 
 R4) Sales tax always zero or missing
-    - If is_municipality == true, zero or missing tax is usually fine.
-    - If is_municipality == false and sales_tax_amount is zero or null
-      for most bills, flag a condition "R4_SALES_TAX_SUSPECT".
-    - This does NOT imply overcharge; is_overcharge_risk should be false.
+    - Apply ONLY IF is_municipality == false.
+    - If the account normally has tax and most bills show zero or null:
+        → flag as "R4_SALES_TAX_SUSPECT".
+    - This is NOT an overcharge by itself; mark is_overcharge_risk = false.
 
-R5) Big swings in load factor or demand
-    - If load_factor is provided, compare to a typical pattern.
-    - If it changes by +/- 50% or more, flag as "R5_LOAD_FACTOR_SWING".
-    - Large swings in kw_demand are already covered by R1 demand rules.
+R5) Big swings in load factor or demand (ONLY if the account has non-zero demand)
+    - If kw_demand > 0 at any point in history:
+         → compare load_factor or kw_demand swings ≥ 50%.
+    - If kw_demand is ALWAYS zero:
+         → skip R5 completely.
+    - rule_id: "R5_LOAD_FACTOR_SWING".
 
 R6) Repeated billing periods or duplicated charges
-    - If two or more bills have identical period_start and period_end
-      dates, or clearly duplicated/overlapping date ranges that look like
-      the same service period billed twice, flag as "R6_DUPLICATE_PERIOD".
-    - This is a serious overcharge risk; is_overcharge_risk should be true.
+    - If two bills share identical period_start & period_end OR clearly duplicate:
+         → rule_id "R6_DUPLICATE_PERIOD", is_overcharge_risk = true.
 
-GENERAL:
-- You are doing TRIAGE, not full tariff validation.
-- Be conservative: when unsure, you may flag "needs review" anomalies
-  but mark is_overcharge_risk = false.
-- Many anomalies are not overcharges; they just need follow-up.
+------------------------------------------------------------
+OUTPUT FORMAT (STRICT JSON)
+------------------------------------------------------------
 
----------------- OUTPUT FORMAT ----------------
-
-Return ONE JSON object with this structure:
+Return ONE JSON object:
 
 {
   "summary": {
@@ -141,26 +149,19 @@ Return ONE JSON object with this structure:
       "bill_id": int,
       "anomalies": [
         {
-          "rule_id": "R1_USAGE_SPIKE" | "R1_USAGE_DROP" | "R1_DEMAND_SPIKE" |
-                     "R1_DEMAND_DROP" | "R1_CHARGE_SPIKE" | "R1_CHARGE_DROP" |
-                     "R2_BILL_DAYS_OUT_OF_RANGE" |
-                     "R3_ZERO_OR_NEGATIVE_USAGE_OR_CHARGE" |
-                     "R4_SALES_TAX_SUSPECT" |
-                     "R5_LOAD_FACTOR_SWING" |
-                     "R6_DUPLICATE_PERIOD" |
-                     "OTHER",
+          "rule_id": "...",
           "severity": "low" | "medium" | "high",
           "is_overcharge_risk": true | false,
-          "field_names": ["kwh_usage", "kw_demand", "total_amount", ...],
-          "message": "Short human-readable explanation"
+          "field_names": ["kwh_usage", "total_amount", ...],
+          "message": "Short explanation"
         }
       ]
     }
   ]
 }
 
-If a bill has no anomalies, you may omit it from bill_anomalies.
-Answer with ONLY this JSON object and no extra commentary.
+If a bill has no anomalies, omit it from bill_anomalies.
+Output ONLY the JSON. No extra text.
 """
 
 
@@ -192,42 +193,74 @@ def load_user_bills_from_db(bill_account: str, limit_rows: int | None = None) ->
     return df
 
 
+def is_municipality_customer(customer_name: str | None) -> bool:
+    """
+    Basic heuristic to detect municipality / govt accounts.
+    Expand as needed.
+    """
+    if not customer_name:
+        return False
+
+    tokens = customer_name.upper()
+    municipal_keywords = [
+        "CITY", "TOWN", "VILLAGE", "COUNTY",
+        "CITY OF", "TOWN OF", "VILLAGE OF",
+        "SCHOOL", "UNIVERSITY", "STATE OF",
+        "DEPT", "DEPARTMENT", "MUNICIPAL"
+    ]
+
+    return any(key in tokens for key in municipal_keywords)
+
+
+
 def dataframe_to_bill_dicts(df: pd.DataFrame) -> list[dict]:
     """
-    Convert user_bills DataFrame to list[dict] for the LLM.
-    bill_id is user_bills.id so we can link anomalies back to the DB.
+    Convert user_bills rows to LLM bill objects.
+    Auto-detect municipality from customer name.
+    Skip R5 rules automatically if demand is always zero.
     """
-    records: list[dict] = []
+    records = []
+
+    # Detect if the entire account ever has demand > 0
+    any_demand = (df["billed_demand"].fillna(0) > 0).any()
 
     for _, row in df.iterrows():
+
+        customer_name = row.get("customer", "")
+        municipal_flag = is_municipality_customer(customer_name)
+
         records.append(
             {
-                # direct link back to user_bills.id
                 "bill_id": int(row["id"]),
-
-                # We only know read_date reliably; treat as period_end
                 "period_start": None,
-                "period_end": row.get("read_date"),
-
+                "period_end": row.get("bill_date"),
                 "bill_days": row.get("days_used"),
                 "kwh_usage": row.get("billed_kwh"),
                 "kw_demand": row.get("billed_demand"),
+
                 "total_amount": row.get("bill_amount"),
                 "sales_tax_amount": row.get("sales_tax_amt"),
                 "load_factor": row.get("load_factor"),
 
-                # For now, assume non-holiday, non-municipality
-                "is_holiday_month": False,
-                "is_municipality": False,
+                # FOUND AUTOMATICALLY:
+                "is_municipality": municipal_flag,
 
-                "notes": f"account={row.get('bill_account')}, "
-                         f"customer={row.get('customer')}, "
-                         f"read_date={row.get('read_date')}",
+                # You can add holiday logic later if needed:
+                "is_holiday_month": False,
+
+                # This lets the LLM skip R5 automatically
+                "account_has_real_demand": any_demand,
+
+                "notes": (
+                    f"account={row.get('bill_account')}, "
+                    f"customer={customer_name}, "
+                    f"read_date={row.get('read_date')}"
+                ),
             }
         )
-
-    return records
     logger.info("Converted %d DataFrame rows to bill dicts", len(records))
+    return records
+    
 
 
 # ============= LLM CALL HELPERS =============

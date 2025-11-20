@@ -233,7 +233,7 @@ def dataframe_to_bill_dicts(df: pd.DataFrame) -> list[dict]:
             {
                 "bill_id": int(row["id"]),
                 "period_start": None,
-                "period_end": row.get("bill_date"),
+                "period_end": row.get("read_date"),
                 "bill_days": row.get("days_used"),
                 "kwh_usage": row.get("billed_kwh"),
                 "kw_demand": row.get("billed_demand"),
@@ -395,7 +395,7 @@ if __name__ == "__main__":
         raise RuntimeError("OPENAI_API_KEY not set in environment.")
 
     # Change this to whichever account you want to validate
-    BILL_ACCOUNT = "1031293107"
+    BILL_ACCOUNT = "1120031219"
 
     anomalies = validate_account_with_llm(BILL_ACCOUNT)
 

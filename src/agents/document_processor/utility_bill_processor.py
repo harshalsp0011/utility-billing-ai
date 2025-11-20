@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 # Strong cleanup + diagnostics so we can see why rows were zero.
 
 # Define your file name and directory
-PDF_FILENAME = "temp_bill.pdf"
+PDF_FILENAME = "validation_3.pdf"
 INPUT_PDF = get_file_path("raw", PDF_FILENAME)
 
 DEST_COLS = [
@@ -352,6 +352,7 @@ def process_bill(pdf_path: Path):
 # Example usage
 if __name__ == "__main__":
     process_bill(INPUT_PDF)
+    
     
 
 

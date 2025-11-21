@@ -96,16 +96,26 @@ IMPORTANT CLARIFICATIONS FOR SMALL LOADS / MUNICIPAL ACCOUNTS
 RULES TO APPLY (FIRST-LOOK QC)
 ------------------------------------------------------------
 
-R1) Unusual spikes or drops in usage or charges
-    - Compare kwh_usage and total_amount against typical history
-      (median or middle 50% of values).
-    - Flag only if the change is ≥ +50% or ≤ -50%.
-    - Allowed rule_ids:
-        "R1_USAGE_SPIKE", "R1_USAGE_DROP",
-        "R1_CHARGE_SPIKE", "R1_CHARGE_DROP".
+R1) Unusual spikes or drops in usage or charges (ROLLING 12-MONTH BASELINE)
+    For each bill, compute the baseline ONLY from the **previous up to 12 months**:
+
+       • usage_baseline  = median(kwh_usage for previous ≤12 bills)
+       • charge_baseline = median(total_amount for previous ≤12 bills)
+
+    If fewer than 3 prior months exist, skip R1 for this bill.
+
+    A bill MUST be flagged if:
+       • kwh_usage      >= 1.50 * usage_baseline  → "R1_USAGE_SPIKE"
+       • kwh_usage      <= 0.50 * usage_baseline  → "R1_USAGE_DROP"
+       • total_amount   >= 1.50 * charge_baseline → "R1_CHARGE_SPIKE"
+       • total_amount   <= 0.50 * charge_baseline → "R1_CHARGE_DROP"
+
+    Apply this strictly to EVERY month independently.
+    Do NOT use any future months when calculating the baseline.
+    Do NOT include the current month when computing its baseline.
 
 R2) Bill period (bill_days) out of normal range
-    - Normal range: 25–35 days inclusive.
+    - Normal range: 25-35 days inclusive.
     - Flag bill_days < 25 or > 35.
     - rule_id: "R2_BILL_DAYS_OUT_OF_RANGE".
 
@@ -163,6 +173,7 @@ Return ONE JSON object:
 If a bill has no anomalies, omit it from bill_anomalies.
 Output ONLY the JSON. No extra text.
 """
+
 
 
 # ============= DB HELPERS =============

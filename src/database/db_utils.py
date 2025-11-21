@@ -347,11 +347,9 @@ def insert_user_bills_bulk(df: pd.DataFrame):
 from sqlalchemy import text
 
 def fetch_user_bills(account_id: str | None = None):
-    """Fetch UserBills rows as a DataFrame.
-
-    Avoids pandas' SQL helper to prevent DBAPI cursor issues across
-    pandas/SQLAlchemy versions by using SQLAlchemy execute + mappings().
-    Optionally filters by `bill_account` if `account_id` is provided.
+    """
+    Fetch all user bills.
+    Optionally filter by bill_account.
     """
     logger.info("start of fetch_user_bills")
     engine = get_engine()
@@ -359,25 +357,28 @@ def fetch_user_bills(account_id: str | None = None):
     try:
         with engine.connect() as connection:
             if account_id:
-                stmt = text("SELECT * FROM user_bills WHERE bill_account = :acct")
+                stmt = text("""
+                    SELECT *
+                    FROM user_bills
+                    WHERE TRIM(bill_account)::text = TRIM(:acct)::text
+                """)
                 result = connection.execute(stmt, {"acct": account_id})
             else:
                 result = connection.execute(text("SELECT * FROM user_bills"))
 
-            try:
-                rows = result.mappings().all()
-                df = pd.DataFrame(rows)
-            except Exception:
-                rows = result.fetchall()
-                df = pd.DataFrame(rows, columns=result.keys())
+            rows = result.mappings().all()
+            df = pd.DataFrame(rows)
 
         logger.info(f"📊 Fetched {len(df)} UserBills rows.")
         return df
+
     except Exception as e:
         logger.error(f"❌ Failed to fetch UserBills: {e}")
         return pd.DataFrame()
+
     finally:
         logger.info("end of fetch_user_bills")
+
 
 
 def fetch_all_account_numbers():
@@ -565,10 +566,10 @@ def update_bill_validation_result(result_id: int, updates: dict):
         session.close()
 
 
-
 def fetch_user_bills_with_issues(account_id: str, issue_type: str | None = None):
     """
-    Fetch user bills for a specific account_id that have validation issues.
+    Fetch ONLY the user bills that have validation issues
+    for the given account_id.
     """
     logger.info("start of fetch_user_bills_with_issues")
     engine = get_engine()
@@ -576,30 +577,50 @@ def fetch_user_bills_with_issues(account_id: str, issue_type: str | None = None)
     try:
         with engine.connect() as connection:
             base_sql = """
-                SELECT 
-                    ub.*, 
-                    bvr.user_bill_id AS validation_user_bill_id,
-                    bvr.issue_type, 
-                    bvr.description, 
-                    bvr.status, 
-                    bvr.detected_on
-                FROM user_bills AS ub
-                JOIN bill_validation_results AS bvr
-                    ON ub.id = bvr.user_bill_id
-                WHERE ub.bill_account = :acct
-            """
+SELECT
+    ub.id AS bill_id,
+    bvr.user_bill_id AS fk_user_bill_id,
+    bvr.id AS issue_id,
+    ub.bill_account,
+    ub.customer,
+    ub.bill_date,
+    ub.read_date,
+    ub.days_used,
+    ub.billed_kwh,
+    ub.billed_demand,
+    ub.load_factor,
+    ub.billed_rkva,
+    ub.bill_amount,
+    ub.sales_tax_amt,
+    ub.bill_amount_with_sales_tax,
+    ub.retracted_amt,
+    ub.sales_tax_factor,
+    ub.created_at AS bill_created_at,
+
+    bvr.issue_type,
+    bvr.description,
+    bvr.status,
+    bvr.detected_on
+FROM user_bills AS ub
+JOIN bill_validation_results AS bvr
+    ON ub.id = bvr.user_bill_id
+WHERE TRIM(ub.bill_account)::text = TRIM(:acct)::text
+
+"""
+
+
+            params = {"acct": account_id}
 
             if issue_type:
                 base_sql += " AND bvr.issue_type = :issue"
-                params = {"acct": account_id, "issue": issue_type}
-            else:
-                params = {"acct": account_id}
+                params["issue"] = issue_type
 
             result = connection.execute(text(base_sql), params)
             rows = result.mappings().all()
+
             df = pd.DataFrame(rows)
 
-        logger.info(f"⚠️ Found {len(df)} issue rows for account {account_id}.")
+        logger.info(f"⚠️ Found {len(df)} bills WITH issues for account {account_id}.")
         return df
 
     except Exception as e:

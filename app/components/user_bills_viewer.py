@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 from src.database.db_utils import (
     fetch_all_account_numbers,
@@ -7,10 +8,10 @@ from src.database.db_utils import (
     fetch_user_bills_with_issues,
 )
 
-# ----------------------------------------------------------------------
-# 1. Human-Readable Column Names
-# ----------------------------------------------------------------------
-COLUMN_RENAMES = {
+# ---------------------------------------------------------
+# Column mappings for display
+# ---------------------------------------------------------
+BILL_COLUMN_RENAMES = {
     "id": "Bill ID",
     "bill_account": "Bill Account",
     "customer": "Customer",
@@ -29,107 +30,143 @@ COLUMN_RENAMES = {
     "created_at": "Uploaded At",
 }
 
+ISSUE_COLUMN_RENAMES = {
+    "bill_id": "Bill ID",
+    "fk_user_bill_id": "Bill ID (FK)",
+    "issue_id": "Issue ID",
+    "issue_type": "Issue Type",
+    "description": "Description",
+    "status": "Status",
+    "detected_on": "Detected On",
 
-# ----------------------------------------------------------------------
-# 2. Highlight Function (uses renamed "Bill ID")
-# ----------------------------------------------------------------------
-def highlight_anomalies(row, issue_ids):
-    if row["Bill ID"] in issue_ids:
-        return ["background-color: yellow"] * len(row)
-    return [""] * len(row)
+    "bill_account": "Bill Account",
+    "customer": "Customer",
+    "bill_date": "Bill Date",
+    "read_date": "Read Date",
+    "days_used": "Days Used",
+    "billed_kwh": "Billed kWh",
+    "billed_demand": "Billed Demand",
+    "load_factor": "Load Factor",
+    "billed_rkva": "Billed rKVA",
+    "bill_amount": "Bill Amount",
+    "sales_tax_amt": "Sales Tax Amount",
+    "bill_amount_with_sales_tax": "Bill Amount (With Tax)",
+    "retracted_amt": "Retracted Amount",
+    "sales_tax_factor": "Sales Tax Factor",
+    "bill_created_at": "Uploaded At",
+}
 
 
-# ----------------------------------------------------------------------
-# 3. Main Viewer
-# ----------------------------------------------------------------------
+# ---------------------------------------------------------
+# MAIN PAGE
+# ---------------------------------------------------------
 def render_user_bills_viewer():
-    st.title("🔍 User Bills with Highlighted Issues)")
+    st.title("📄 User Billing Data Viewer")
 
-    # --------------------------------------------------------------
-    # 1. Select Account
-    # --------------------------------------------------------------
+    # ===========================
+    # Account Selection
+    # ===========================
     accounts = fetch_all_account_numbers()
     if not accounts:
-        st.warning("No accounts found.")
+        st.warning("No accounts found in database.")
         return
 
     account_id = st.selectbox("Select Account Number", accounts)
 
-    # --------------------------------------------------------------
-    # 2. Fetch ALL bills for this account
-    # --------------------------------------------------------------
+    # ===========================
+    # Fetch Bills
+    # ===========================
     bills_df = fetch_user_bills(account_id)
     if bills_df.empty:
         st.warning("No bills found for this account.")
         return
 
-    # --------------------------------------------------------------
-    # 3. Fetch Validation Issues
-    # --------------------------------------------------------------
+    # ===========================
+    # Fetch Issues
+    # ===========================
     issues_df = fetch_user_bills_with_issues(account_id)
 
-    # Detect correct FK column
-    possible_fk_cols = [
-        "validation_user_bill_id",
-        "user_bill_id",
-        "USER_BILL_ID",
-        "bvr_user_bill_id",
-    ]
-    fk_col = next((c for c in possible_fk_cols if c in issues_df.columns), None)
+    # Extract bill IDs that have anomalies
+    issue_bill_ids = set()
+    if not issues_df.empty and "id" in issues_df.columns:
+        issue_bill_ids = (
+            pd.to_numeric(issues_df["id"], errors="coerce")
+            .dropna()
+            .astype(int)
+            .tolist()
+        )
+        issue_bill_ids = set(issue_bill_ids)
 
-    issue_ids = set()
-    if fk_col:
-        issue_ids = set(issues_df[fk_col].tolist())
+    # ===========================
+    # Prepare Billing Data
+    # ===========================
+    display_df = bills_df.rename(columns=BILL_COLUMN_RENAMES).copy()
 
-    # --------------------------------------------------------------
-    # 4. Prepare Display Table
-    # --------------------------------------------------------------
-    display_df = bills_df.copy()
-
-    # Rename to human-readable
-    display_df = display_df.rename(columns=COLUMN_RENAMES)
-
-    # Convert dates
+    # Convert date fields
     for date_col in ["Bill Date", "Read Date", "Uploaded At"]:
         if date_col in display_df.columns:
-            display_df[date_col] = pd.to_datetime(display_df[date_col])
+            display_df[date_col] = pd.to_datetime(display_df[date_col], errors="coerce")
 
-    # Index starts from 1
-    display_df.index = display_df.index + 1
-
-    # Formatting: all floats → 2 decimals
-    numeric_cols = display_df.select_dtypes(include="number").columns.tolist()
-
-    # --------------------------------------------------------------
-    # 5. Apply Highlight Style
-    # --------------------------------------------------------------
-    styled_df = (
-        display_df.style
-        .apply(highlight_anomalies, issue_ids=issue_ids, axis=1)
-        .format({col: "{:.2f}" for col in numeric_cols})
+    # Add helper column for AG-Grid styling
+    display_df["_has_issue"] = display_df["Bill ID"].apply(
+        lambda x: 1 if x in issue_bill_ids else 0
     )
 
-    # --------------------------------------------------------------
-    # 6. Render Table
-    # --------------------------------------------------------------
-    st.subheader("📄 Billing Data (Highlighted Rows = Issues)")
-    st.dataframe(styled_df, width='stretch')
+    # ===========================
+    # AG-GRID for Billing Table
+    # ===========================
+    st.subheader("🔍 Billing Data")
 
-    # --------------------------------------------------------------
-    # 7. Show Anomaly Details
-    # --------------------------------------------------------------
-    st.subheader("⚠️ Anomaly Details")
+    gb = GridOptionsBuilder.from_dataframe(display_df)
+    gb.configure_grid_options(
+        rowClassRules={
+            # highlight full row if issue
+            "issue-row": "data._has_issue == 1"
+        }
+    )
+    grid_options = gb.build()
+
+    # CSS: Full red frame + faint red background + glow
+    custom_css = {
+        ".issue-row": {
+            "background-color": "rgba(255, 0, 0, 0.10) !important;",
+            "border-top": "3px solid #ff1a1a !important;",
+            "border-bottom": "3px solid #ff1a1a !important;",
+            "border-left": "6px solid #ff1a1a !important;",
+            "border-right": "6px solid #ff1a1a !important;",
+            "box-shadow": "inset 0 0 12px rgba(255, 0, 0, 0.45) !important;",
+            "border-radius": "4px !important;",
+        }
+    }
+
+    AgGrid(
+        display_df,
+        gridOptions=grid_options,
+        custom_css=custom_css,
+        allow_unsafe_jscode=True,
+        fit_columns_on_grid_load=True,
+        theme="streamlit",
+        height=550,
+    )
+
+    # ===========================
+    # Issues Table
+    # ===========================
+    st.subheader("⚠️ Anomalies Detected")
 
     if issues_df.empty:
         st.info("No anomalies detected for this account.")
         return
 
-    for bill_id in issue_ids:
-        with st.expander(f"Bill ID {bill_id} — View Issues"):
-            sub = issues_df[issues_df[fk_col] == bill_id][[
-                "issue_type",
-                "description",
-                "status",
-                "detected_on"
-            ]]
-            st.table(sub)
+    issues_display = issues_df.rename(columns=ISSUE_COLUMN_RENAMES).copy()
+
+    if "Detected On" in issues_display.columns:
+        issues_display["Detected On"] = pd.to_datetime(
+            issues_display["Detected On"], errors="coerce"
+        )
+
+    for col in ["Bill Date", "Read Date"]:
+        if col in issues_display.columns:
+            issues_display[col] = pd.to_datetime(issues_display[col], errors="coerce")
+
+    st.dataframe(issues_display, width="stretch", height=350)

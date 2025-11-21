@@ -380,6 +380,30 @@ def fetch_user_bills(account_id: str | None = None):
         logger.info("end of fetch_user_bills")
 
 
+def fetch_all_account_numbers():
+    """Return a list of all distinct bill_account values from user_bills."""
+    logger.info("start of fetch_all_account_numbers")
+    engine = get_engine()
+
+    try:
+        with engine.connect() as connection:
+            stmt = text("SELECT DISTINCT bill_account FROM user_bills")
+            result = connection.execute(stmt)
+
+            # Extract the column into a Python list
+            accounts = [row[0] for row in result.fetchall()]
+
+        logger.info(f"📌 Found {len(accounts)} distinct account numbers.")
+        return accounts
+
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch account numbers: {e}")
+        return []
+
+    finally:
+        logger.info("end of fetch_all_account_numbers")
+
+
 
 
 
@@ -539,3 +563,50 @@ def update_bill_validation_result(result_id: int, updates: dict):
     finally:
         logger.info("end of update_bill_validation_result")
         session.close()
+
+
+
+def fetch_user_bills_with_issues(account_id: str, issue_type: str | None = None):
+    """
+    Fetch user bills for a specific account_id that have validation issues.
+    """
+    logger.info("start of fetch_user_bills_with_issues")
+    engine = get_engine()
+
+    try:
+        with engine.connect() as connection:
+            base_sql = """
+                SELECT 
+                    ub.*, 
+                    bvr.user_bill_id AS validation_user_bill_id,
+                    bvr.issue_type, 
+                    bvr.description, 
+                    bvr.status, 
+                    bvr.detected_on
+                FROM user_bills AS ub
+                JOIN bill_validation_results AS bvr
+                    ON ub.id = bvr.user_bill_id
+                WHERE ub.bill_account = :acct
+            """
+
+            if issue_type:
+                base_sql += " AND bvr.issue_type = :issue"
+                params = {"acct": account_id, "issue": issue_type}
+            else:
+                params = {"acct": account_id}
+
+            result = connection.execute(text(base_sql), params)
+            rows = result.mappings().all()
+            df = pd.DataFrame(rows)
+
+        logger.info(f"⚠️ Found {len(df)} issue rows for account {account_id}.")
+        return df
+
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch bills with issues: {e}")
+        return pd.DataFrame()
+
+    finally:
+        logger.info("end of fetch_user_bills_with_issues")
+
+

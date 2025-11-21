@@ -1,15 +1,13 @@
-# sc_llm_extractor_v3.py
 """
-Dynamic LLM-based Tariff JSON extractor (v3)
+sc_llm_extractor_v4.py
+-----------------------
+Dynamic LLM-based Tariff JSON extractor (v4)
 
-Features:
-- Detects schema type for each service classification from extracted text
-- Asks LLM to output the matching, rule-engine-ready JSON
-- Validates essential keys for each schema type
-- Saves raw LLM responses and final parsed JSON
-
-Usage:
-    python sc_llm_extractor_v3.py
+- Uses the improved dynamic sections output from filter_and_extract_schemes.py
+- Robust JSON cleanup and parsing
+- Schema detection tuned for tariff types
+- Minimal validation, warnings, and trace notes
+- Does not change file paths / interfaces (only logic changes)
 """
 
 import json
@@ -18,7 +16,7 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -26,15 +24,15 @@ load_dotenv()
 from openai import OpenAI
 
 # -----------------------
-# Config (edit paths as required)
+# Config (edit paths as required) — keep same repo layout
 # -----------------------
 ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 SC_TEXT_JSON = ROOT / "data" / "processed" / "harshal_sc.json"
-OUT_JSON = ROOT / "data" / "processed" / "Hp_sc_final_tariffs_v3.json"
-RAW_RESP_JSON = ROOT / "data" / "processed" / "Hp_sc_llm_raw_responses_v3.json"
+OUT_JSON = ROOT / "data" / "processed" / "Hp_sc_final_tariffs_v4.json"
+RAW_RESP_JSON = ROOT / "data" / "processed" / "Hp_sc_llm_raw_responses_v4.json"
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 MAX_RETRIES = 2
@@ -52,37 +50,71 @@ except Exception as e:
 
 
 # -----------------------
-# Utility: concat all sections into big text snippet
+# Helper: concat all sections into big text snippet for prompt
 # -----------------------
 def concat_all_sections(block: Dict[str, Any]) -> str:
     parts: List[str] = []
+
+    # include pages info if present
     src = block.get("pages")
     if src:
         parts.append("SOURCE_PAGES: " + ",".join([str(x) for x in src]))
-    for k, v in block.items():
-        if k == "pages" or v is None:
-            continue
-        header = f"=== SECTION: {k} ==="
-        if isinstance(v, list):
-            if v:
-                parts.append(header)
-                parts.extend([ln for ln in v if isinstance(ln, str)])
+
+    # preserve sections_order if present for deterministic prompt
+    if "sections_order" in block:
+        order = block.get("sections_order", list(block.get("sections", {}).keys()))
+    else:
+        order = list(block.get("sections", {}).keys())
+
+    sections = block.get("sections", {})
+
+    for k in order:
+        v = sections.get(k)
+        parts.append(f"=== SECTION: {k} ===")
+        # If section is dict-like (future-compat: raw_text / lines / tables)
+        if isinstance(v, dict):
+            # include raw_text
+            raw_text = v.get("raw_text")
+            if raw_text:
+                parts.append("### RAW_TEXT ###")
+                parts.append(raw_text)
+            # include lines if present
+            lines = v.get("lines")
+            if lines and isinstance(lines, list):
+                parts.append("### LINES ###")
+                parts.extend([ln for ln in lines if isinstance(ln, str)])
+            # include tables if present
+            tables = v.get("tables")
+            if tables:
+                parts.append("### TABLES (json) ###")
+                try:
+                    parts.append(json.dumps(tables))
+                except Exception:
+                    parts.append(str(tables))
+        elif isinstance(v, list):
+            # list of lines
+            parts.extend([ln for ln in v if isinstance(ln, str)])
         elif isinstance(v, str):
-            if v.strip():
-                parts.append(header)
-                parts.append(v.strip())
+            parts.append(v)
         else:
-            parts.append(header)
+            # fallback stringify
             parts.append(json.dumps(v))
+
+    # fallback: include combined_text if present (and not already added)
+    ct = block.get("combined_text")
+    if ct and "combined_text" not in order:
+        parts.append("=== SECTION: combined_text ===")
+        parts.append(ct)
+
     return "\n".join(parts)
 
 
 # -----------------------
-# Schema detection heuristics
+# Schema detection heuristics (improved)
 # -----------------------
 def detect_schema_type(text: str) -> str:
     """
-    Return one of:
+    Return:
       - simple_residential
       - simple_commercial
       - demand_metered
@@ -90,99 +122,121 @@ def detect_schema_type(text: str) -> str:
     """
     txt = text.lower()
 
-    # voltage indicators & multi-tier + per kW/per kwh => SC3 family
     has_voltage = bool(re.search(r"\b0-2\.2|2\.2-15|22-50|over\s*60|over-60", txt))
-    has_tier = bool(re.search(r"\btier\s*\d|\btier1|\b tier 1\b", txt))
-    has_per_kw = bool(re.search(r"per\s*kW|per-kW|distribution\s*\(per kW\)", txt))
+    has_tier = bool(re.search(r"\btier\s*\d|\btier1|\btier 1\b", txt))
+    has_per_kw = bool(re.search(r"per\s*kW|per-kW|distribution\s*\(per kW\)|distribution\s*per\s*kW", txt, flags=re.I))
     has_per_kwh = bool(re.search(r"per\s*kwh|per-kwh|on peak|off peak|super peak", txt))
-    has_first_40 = "first 40" in txt or "first forty" in txt
-    has_rkva = "r kva" in txt.lower() or "rkva" in txt.lower() or "reactive demand" in txt.lower()
-    has_demand_rules = bool(re.search(r"15[- ]minute|highest kW measured|billing demand|ratchet|preceding 11 months|minimum demand", txt))
+    has_first_40 = bool(re.search(r"first\s+40|first\s+forty", txt))
+    has_rkva = bool(re.search(r"\brkva\b|\breactive demand\b", txt))
+    has_demand_rules = bool(re.search(r"15[- ]minute|highest kW measured|billing demand|ratchet|preceding 11 months|minimu", txt))
 
-    # Heuristics
+    # direct signals
+    if "non-demand" in txt or "non demand" in txt:
+        # non-demand tends to be commercial/residential, not demand-metered
+        return "simple_commercial" if has_tier or has_per_kwh else "simple_residential"
     if has_voltage and (has_tier or has_first_40 or has_per_kw):
         return "voltage_tiered_demand_metered"
     if has_demand_rules or has_per_kw or has_rkva or "contract demand" in txt:
         return "demand_metered"
-    # tiered energy but no voltage tiers -> simple_commercial
-    if has_tier or (has_per_kwh and "tier" in txt):
+    if has_tier and has_per_kwh:
         return "simple_commercial"
-    # default fallback
+    # fallback
     return "simple_residential"
 
 
 # -----------------------
-# Schema-specific instruction fragments
+# Schema-specific instruction fragments (kept concise)
 # -----------------------
 BASE_INSTRUCTION = r"""
 You are a utility tariff extraction engine. Use ONLY the supplied text below (do not hallucinate).
-Return EXACTLY valid JSON (no markdown). Values that are not present should be omitted (not null).
+Return EXACTLY valid JSON (no markdown). Values that are not present should be omitted (do not return null).
 Numeric values should be plain numbers (no dollar signs).
 """
 
-SCHEMA_TEMPLATES: Dict[str, str] = {
+SCHEMA_TEMPLATES = {
     "simple_residential": r"""
 Schema: simple_residential
 Return JSON keys:
 { "service_class","version?","effective_date?","customer_charge": {"default": number}, "energy_rates": {"flat_kwh":number}, "minimum_bill?":number, "rules?": {...}, "special_provisions?": {...}, "surcharges?": {"list": [...]}, "formulas?": {"bill": "..."}, "notes?": {...} }
-Notes: residential classes have flat kWh or simple TOU. If On/Off/Super Peak rates are present capture as energy_rates.on_peak_kwh / off_peak_kwh / super_peak_kwh.
 """,
     "simple_commercial": r"""
 Schema: simple_commercial
 Return JSON keys:
 { "service_class","version?","effective_date?","customer_charge": {"default": number}, "energy_rates": { "tier1": {...}, "tier2"?: {...}, ... }, "demand_charges?": {...}, "rules?": {...}, "special_provisions?": {...}, "surcharges?": {"list":[...]}, "formulas?": {...}, "notes?": {...} }
-Notes: capture tiered energy rates (tier1..tier4) and attach on_peak/off_peak/super_peak keys under each tier if present.
 """,
     "demand_metered": r"""
 Schema: demand_metered
 Return JSON keys:
 { "service_class","version?","effective_date?","customer_charge": {"default": number}, "demand_charges": {"contract_kw_rate"?:number, "on_peak_kw_rate"?:number, "super_peak_kw_rate"?:number, "additional_kw"?:number }, "reactive_charge?": {"rate_per_rkva":number,"formula":string}, "energy_rates?": {...}, "rules": {"demand_determination": string, "classification_shift": [...]}, "special_provisions?": {...}, "surcharges?": {"list":[...]}, "formulas?": {...}, "notes?": {...} }
-Notes: demand formulas and ratchets are essential for billing.
 """,
     "voltage_tiered_demand_metered": r"""
 Schema: voltage_tiered_demand_metered
 Return JSON keys:
 { "service_class","version?","effective_date?","voltage_levels": [..], "customer_charge": {"<voltage>":number,...}, "demand_charges": {"first_40_kw": {"<voltage>":number,...}, "additional_kw": {"<voltage>":number,...} }, "tiered_energy_rates": { "<voltage>": { "tier1": {"distribution_kw":number, "on_peak_kwh":number, "off_peak_kwh":number, "super_peak_kwh":number}, "tier2": {...}, ... }, ... }, "reactive_charge?": {"rate_per_rkva":number,"formula":string}, "rules": {"demand_determination":string, "classification_shift":[...]}, "special_provisions?": {...}, "surcharges?": {"list":[...]}, "formulas?": {...}, "notes?": {...} }
-Notes: capture full per-voltage tier tables; if table has Tier1..Tier4 capture all tiers.
 """
 }
 
 
 # -----------------------
-# Cleaning LLM output to pure JSON
+# Cleaning LLM output to pure JSON (robust)
 # -----------------------
 def clean_llm_json_text(raw: str) -> str:
     s = raw.strip()
+
+    # Remove Markdown fences
     if s.startswith("```"):
         pieces = s.split("```")
         if len(pieces) >= 3:
             s = pieces[1]
         else:
             s = s.strip("`")
+
+    # Remove leading "json\n"
     if s.lower().startswith("json\n"):
         s = s[len("json\n"):]
+
+    # Find first { and last } that are balanced-ish
     first = s.find("{")
     last = s.rfind("}")
-    if first != -1 and last != -1:
-        s = s[first:last+1]
+
+    if first == -1 or last == -1 or last <= first:
+        # As fallback, try to find the first '{' and first matching '}' using simple stack scan
+        stack = []
+        start = None
+        for i, ch in enumerate(s):
+            if ch == "{":
+                if start is None:
+                    start = i
+                stack.append("{")
+            elif ch == "}":
+                if stack:
+                    stack.pop()
+                    if not stack:
+                        last = i
+                        first = start
+                        break
+        if start is None or last is None or last <= start:
+            return ""  # can't salvage
+
+    s = s[first:last+1]
     return s.strip()
 
 
 # -----------------------
-# LLM call wrapper
+# LLM call wrapper with basic retries
 # -----------------------
 def call_llm(prompt: str, model: str = MODEL) -> str:
     for attempt in range(1, MAX_RETRIES + 2):
         try:
-            resp = client.chat.completions.create(
+            response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
                 max_tokens=6000
             )
-            return resp.choices[0].message.content
+            return response.choices[0].message.content
         except Exception as e:
-            print(f"⚠️ LLM error (attempt {attempt}): {e}")
+            print(f"⚠️ LLM call failed (attempt {attempt}): {e}")
             if attempt <= MAX_RETRIES:
                 time.sleep(SLEEP_BETWEEN_RETRIES * attempt)
                 continue
@@ -190,22 +244,18 @@ def call_llm(prompt: str, model: str = MODEL) -> str:
 
 
 # -----------------------
-# Schema basic validators
+# minimal validation
 # -----------------------
 def minimal_validation(parsed: Dict[str, Any], schema_type: str) -> List[str]:
-    """
-    Return a list of warning/error strings (empty means pass minimal checks).
-    """
     issues = []
-    # require service_class
     if "service_class" not in parsed:
-        issues.append("missing service_class")
+        issues.append("missing `service_class`")
     if schema_type == "simple_residential":
         if "customer_charge" not in parsed and "energy_rates" not in parsed:
-            issues.append("simple_residential should have customer_charge or energy_rates")
+            issues.append("simple_residential should include customer_charge or energy_rates")
     if schema_type == "simple_commercial":
         if "energy_rates" not in parsed:
-            issues.append("simple_commercial missing energy_rates (tiered rates)")
+            issues.append("simple_commercial missing energy_rates")
     if schema_type == "demand_metered":
         if "demand_charges" not in parsed and "reactive_charge" not in parsed:
             issues.append("demand_metered should include demand_charges or reactive_charge")
@@ -213,12 +263,12 @@ def minimal_validation(parsed: Dict[str, Any], schema_type: str) -> List[str]:
         if "voltage_levels" not in parsed:
             issues.append("voltage_tiered_demand_metered missing voltage_levels")
         if "tiered_energy_rates" not in parsed and "demand_charges" not in parsed:
-            issues.append("voltage_tiered_demand_metered requires tiered_energy_rates and demand_charges")
+            issues.append("voltage_tiered_demand_metered should include tiered_energy_rates and demand_charges")
     return issues
 
 
 # -----------------------
-# Build prompt for a scheme
+# Build prompt (keeps instruction + schema template + input)
 # -----------------------
 def build_prompt_for_scheme(scheme: str, full_text: str, schema_type: str) -> str:
     prompt_parts = [
@@ -228,12 +278,12 @@ def build_prompt_for_scheme(scheme: str, full_text: str, schema_type: str) -> st
         "SCHEMA_INSTRUCTIONS:",
         SCHEMA_TEMPLATES[schema_type],
         "",
-        "INPUT TEXT (use ONLY this text):",
+        "INPUT TEXT (use ONLY this text and do NOT hallucinate):",
         "-----",
         full_text,
         "-----",
         "",
-        "Output only JSON and nothing else."
+        "Return only JSON and nothing else."
     ]
     return "\n".join(prompt_parts)
 
@@ -276,9 +326,10 @@ def run():
 
         # 4) clean & parse
         cleaned = clean_llm_json_text(raw)
-        raw_responses[scheme]["cleaned_text"] = cleaned[:4000]
+        raw_responses[scheme]["cleaned_text_snippet"] = cleaned[:4000]
         if not cleaned:
-            print(f"❌ Empty cleaned response for {scheme}")
+            print(f"❌ Empty cleaned response for {scheme}. Raw response saved.")
+            raw_responses[scheme]["parse_error"] = "empty_cleaned_response"
             continue
 
         try:
@@ -288,18 +339,19 @@ def run():
             print("---- RAW RESPONSE (truncated) ----")
             print(raw[:2000])
             raw_responses[scheme]["parse_error"] = str(e)
+            raw_responses[scheme]["raw_preview"] = raw[:2000]
             continue
 
-        # 5) set service_class if missing
+        # Ensure service_class present
         if "service_class" not in parsed:
             parsed["service_class"] = scheme
 
-        # 6) add trace snippet notes
+        # Add trace notes
         parsed.setdefault("notes", {})
-        parsed["notes"]["raw_extraction_version"] = parsed["notes"].get("raw_extraction_version", "v3-auto")
+        parsed["notes"]["raw_extraction_version"] = parsed["notes"].get("raw_extraction_version", "v4-auto")
         parsed["notes"]["raw_text_snippet"] = parsed["notes"].get("raw_text_snippet", snippet[:300])
 
-        # 7) minimal validation
+        # Minimal validation
         issues = minimal_validation(parsed, schema_type)
         if issues:
             print(f"⚠️ Validation warnings for {scheme}: {issues}")

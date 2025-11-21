@@ -2,22 +2,8 @@
 streamlit_app.py
 ----------------
 Main Streamlit entry point for Utility Billing AI.
-
-Purpose:
---------
-Provides a UI for Troy & Banks analysts to:
-  • Upload bill and tariff files
-  • Trigger the workflow
-  • Monitor pipeline status
-  • Download reports
-
-Run:
------
-streamlit run app/streamlit_app.py
 """
 
-# Ensure project root and src/ are on sys.path so imports like `app.*` and `src.*`
-# work when Streamlit runs the script from the `app/` directory.
 import sys
 import os
 from pathlib import Path
@@ -29,156 +15,145 @@ def _add_path_front(p: Path):
             sys.path.remove(p_str)
         sys.path.insert(0, p_str)
 
-# Project root is one level up from this file (app/ -> project_root)
 _THIS_FILE = Path(__file__).resolve()
 project_root = _THIS_FILE.parent.parent
+
 _add_path_front(project_root)
 _add_path_front(project_root / "src")
 
-# Allow overriding in environments (useful in Docker / Streamlit Cloud)
 env_root = os.environ.get("UTIL_BILLING_PROJECT_ROOT")
 if env_root:
     _add_path_front(Path(env_root).expanduser().resolve())
     _add_path_front(Path(env_root).expanduser().resolve() / "src")
 
-# Load .env from project root (so env vars are available to all modules)
+# Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv(str(project_root / ".env"))
-except Exception:
-    # dotenv not available or .env missing; continue and rely on existing env
+except:
     pass
 
-# Import logger after we've ensured `project_root` and `src/` are on sys.path
+# Load Logger
 try:
     from src.utils.logger import get_logger
     logger = get_logger(__name__)
-except Exception:
-    # Fallback: basic logging if package import still fails
+except:
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
 import streamlit as st
-import pandas as pd
 
+# -----------------------------------------------------
+# PAGE SETTINGS
+# -----------------------------------------------------
 st.set_page_config(
     page_title="Utility Billing AI",
-    #page_icon="📊",
     layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-# Load logo robustly: resolve absolute path and read bytes to avoid
-# Streamlit path-resolution issues when running from different CWDs.
+# -----------------------------------------------------
+# CUSTOM CSS - LOAD FROM EXTERNAL FILE
+# -----------------------------------------------------
+css_path = project_root / "app/assets/sidebar_styles.css"
+if css_path.exists():
+    with open(css_path, 'r') as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+else:
+    logger.warning(f"CSS file not found: {css_path}")
+
+# -----------------------------------------------------
+# SIDEBAR LOGO
+# -----------------------------------------------------
 try:
-    image_rel = Path("app/assets/logo.jpeg")
-    # If project_root is defined above, prefer its resolved path
-    image_abs = (project_root / image_rel).resolve() if 'project_root' in globals() else image_rel.resolve()
-    logger.info(f"cwd={Path.cwd()} | logo_resolved={image_abs}")
-    if image_abs.exists():
-        try:
-            with image_abs.open("rb") as _f:
-                img_bytes = _f.read()
-            st.sidebar.image(img_bytes, width=True)
-        except Exception as e:
-            logger.warning(f"Failed to read logo image bytes: {e}")
-            st.sidebar.write("Troy & Banks")
+    logo_path = (project_root / "app/assets/logo.jpeg").resolve()
+    logger.info(f"Logo path resolved: {logo_path}")
+
+    if logo_path.exists():
+        st.sidebar.image(str(logo_path), width=140)
     else:
-        logger.warning(f"Logo file not found at {image_abs}")
         st.sidebar.write("Troy & Banks")
+
 except Exception as e:
-    # If anything unexpected happens, avoid crashing the app
-    try:
-        logger.error(f"Error loading sidebar image: {e}")
-    except Exception:
-        pass
+    logger.error(f"Error loading logo: {e}")
     st.sidebar.write("Troy & Banks")
 
 st.sidebar.title("Troy & Banks – Utility Billing AI")
 
+# -----------------------------------------------------
+# NAVIGATION WITH ICONS
+# -----------------------------------------------------
+# Icon mapping for each page
+page_icons = {
+    "Upload Files": "📁",
+    "User Bills": "📄",
+    "Run Workflow": "▶️",
+    "Pipeline Monitor": "📊",
+    "Reports": "📋"
+}
+
+# Add custom HTML for tooltip support
+st.sidebar.markdown("""
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const labels = {
+        '📁': 'Upload Files',
+        '📄': 'User Bills',
+        '▶️': 'Run Workflow',
+        '📊': 'Pipeline Monitor',
+        '📋': 'Reports'
+    };
+    
+    setTimeout(() => {
+        document.querySelectorAll('[data-baseweb="radio"] label').forEach(label => {
+            const icon = label.textContent.trim().substring(0, 2);
+            if (labels[icon]) {
+                label.setAttribute('title', labels[icon]);
+            }
+        });
+    }, 100);
+});
+</script>
+""", unsafe_allow_html=True)
+
+# Create navigation with icon labels
+page_options = list(page_icons.keys())
+
+# Simple approach - show icon and text, CSS will handle visibility
 page = st.sidebar.radio(
     "Navigation",
-    ["Upload Files", "Run Workflow", "Pipeline Monitor", "Reports"],
+    page_options,
+    format_func=lambda x: f"{page_icons[x]}  {x}",
+    key="nav_radio",
+    label_visibility="collapsed"
 )
 
 # -----------------------------------------------------
-# 1. Upload Files
+# ROUTING
 # -----------------------------------------------------
-if "Upload" in page:
+if page == "Upload Files":
     from app.components.file_uploader import render_file_uploader
     render_file_uploader()
 
-# -----------------------------------------------------
-# 2. Run Workflow
-# -----------------------------------------------------
+elif page == "User Bills":
+    from app.components.user_bills_viewer import render_user_bills_viewer
+    render_user_bills_viewer()
 
-# elif "Run Workflow" in page:
-#     #from app.components.workflow_trigger import render_workflow_trigger
-#     #render_workflow_trigger()
-#     st.title("Run Workflow")
-#     st.write("Click below to start the full billing analysis pipeline.")
+elif page == "Run Workflow":
+    from app.components.workflow_runner import render_workflow_runner
+    render_workflow_runner()
 
-#     from app.components.airflow_trigger import trigger_dag_run, monitor_dag_run
+elif page == "Pipeline Monitor":
+    from app.components.pipeline_monitor import render_pipeline_monitor
+    render_pipeline_monitor()
 
-#     if st.button(" Start Airflow Workflow"):
-#         logger.info("start of run_workflow")
-#         dag_run_id = trigger_dag_run()
-#         if dag_run_id:
-            
-#             st.info(f"Triggered Airflow DAG Run: **{dag_run_id}**")
-#             monitor_dag_run(dag_run_id)
-#         else:
-#             st.warning("Could not trigger DAG. Try again later.")
-
-
-elif "Run Workflow" in page:
-    st.title("Run Workflow")
-    st.write("Click below to start the full billing analysis pipeline.")
-
-    from app.components.airflow_trigger import trigger_dag_run, monitor_dag_run
-
-    if st.button("▶️ Start Airflow Workflow"):
-        logger.info("User clicked: Start Airflow Workflow")
-        
-        # Trigger the DAG
-        dag_run_id = trigger_dag_run()
-        
-        if dag_run_id:
-            st.info(f"✅ Triggered DAG Run: **{dag_run_id}**")
-            # Monitor the DAG with 5-second refresh interval
-            monitor_dag_run(dag_run_id, refresh_interval=5)
-        else:
-            st.warning("⚠️ Could not trigger DAG. Try again later.")
+elif page == "Reports":
+    from app.components.reports_viewer import render_reports_viewer
+    render_reports_viewer()
 
 # -----------------------------------------------------
-# 3. Pipeline Monitor
+# FOOTER
 # -----------------------------------------------------
-elif "Pipeline Monitor" in page:
-    st.title("Pipeline Monitor")
-    st.write("Displays latest pipeline runs and processed data.")
-    try:
-        from src.database.db_utils import fetch_processed_data
-        df = fetch_processed_data(limit=10)
-        st.dataframe(df)
-    except Exception as e:
-        st.error(f"Database connection error: {e}")
-
-# -----------------------------------------------------
-# 4. Reports
-# -----------------------------------------------------
-elif "Reports" in page:
-    st.title("Reports")
-    st.write("Download generated reports.")
-    output_dir = Path("data/output")
-    if not output_dir.exists():
-        st.warning("No reports found yet.")
-    else:
-        for file in output_dir.glob("*.xlsx"):
-            st.download_button(
-                label=f"Download {file.name}",
-                data=file.read_bytes(),
-                file_name=file.name,
-            )
-
 st.sidebar.markdown("---")
 st.sidebar.caption("© 2025 Troy & Banks | Utility Billing AI Prototype")

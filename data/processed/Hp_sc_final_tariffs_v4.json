@@ -1,0 +1,567 @@
+{
+  "SC1": {
+    "service_class": "SC1",
+    "version": 28,
+    "effective_date": "09/01/2025",
+    "customer_charge": {
+      "default": 19
+    },
+    "energy_rates": {
+      "default": {
+        "per_kwh": 0.08889
+      },
+      "time_of_use": {
+        "super_peak_on_peak": 0.11494,
+        "off_peak": 0.0097
+      }
+    },
+    "demand_charges": {
+      "contract_demand_per_kw": 5.49,
+      "as_used_on_peak_daily_demand_per_kw": 0.461,
+      "as_used_super_peak_daily_demand_per_kw": 1.0179
+    },
+    "special_provisions": {
+      "A": "Service under this Service Classification is primarily intended for residential customers residing in individual dwelling units. Minor professional or commercial operations are permitted if exclusively by the residential customer, area used does not exceed 50% of the cubical content, and not more than two rooms are used.",
+      "B": "Customers in good standing may pay under the Company's Monthly Budget Plan covering up to twelve months billing with options to start with next or last bill. Budget amounts are reviewed and adjusted as needed. Late payment charge of 1.5% applies pursuant to Rule 26.4.",
+      "C": "Customers converting to electric space heating without complying with minimum insulation requirements will pay a surcharge of 25% of their total bill.",
+      "D": "Quarterly Payment Plan available for residential customers 62 years or older with average annual billing not more than 150.",
+      "E": "Residential status will not begin earlier than October 1991 meter reading for customers eligible based on multiple occupancy building clause.",
+      "F": "Net Energy Billing for Customers Operating Solar Electric Generating Equipment per Public Service Law Section 66-j and Rule 36.",
+      "G": "Reserved for future use.",
+      "H": "On-Site Generation Special Provision requires certification and is subject to Service Classification No. 7 unless isolated or used exclusively as Emergency Power System.",
+      "I": "Residential rate applicable for use predominantly or primarily in connection with religious purposes by qualifying organizations with evidence of eligibility. Non-qualifying uses include colleges, hospitals, recreational facilities, bookstores, lodging homes, radio stations, clothing stores, and separately metered child care facilities.",
+      "J": "Net Energy Billing for Customers Operating Farm Waste Electric Generating Equipment per Rule 36.",
+      "K": "Net Energy Billing for Customers Operating Wind Electric Generating Equipment per Rule 37.",
+      "L": "Residential Optional Time of Use Delivery and Commodity Rate with specified time periods and rates. Incremental customer charge of 4.42 per month applies unless waived for verified PEV or participation in demonstration project. Service subject to metering availability.",
+      "M": "Energy Affordability Program eligibility and tiered credits as described in Statement of Energy Affordability Credit (EAC).",
+      "N": "Residential Electric Vehicle Charge Smart Plan awards Monthly Charge Smart Incentive for off-peak EV charging with specified requirements, enrollment process, and billing provisions."
+    },
+    "surcharges": {
+      "list": [
+        "Rule 32.2 - Municipal Undergrounding Surcharge",
+        "Rule 40.1.8 - Value of Distributed Energy Resources\u2019 Customer Benefit Contribution Charge",
+        "Rule 40.3 - Value of Distributed Energy Resource (VDER) Value Stack Cost Recovery Surcharge",
+        "Rule 41 - System Benefits Charge",
+        "Rule 42 - Merchant Function Charge",
+        "Rule 43 - Transmission Revenue Adjustment",
+        "Rule 45 - Non-Wires Alternative Surcharge",
+        "Rule 46 - Supply Service Charges",
+        "Rule 49 - Earnings Adjustment Mechanism",
+        "Rule 50 - Reliability Support Services Surcharge",
+        "Rule 52 - Electric Vehicle Make-Ready Surcharge",
+        "Rule 56 - Energy Storage Surcharge",
+        "Rule 57 - Revenue Decoupling Mechanism",
+        "Rule 59 - Arrears Management Program Recovery (AMP) Surcharge",
+        "Rule 64 - Dynamic Load Management (DLM) Surcharge",
+        "Rule 67 - Rate Adjustment Mechanism (RAM)",
+        "Rule 68 - Other Delivery Surcharges (ODS)",
+        "Rule 69 - Incremental Energy Efficiency (IEE) Surcharge",
+        "Rule 73 - Proactive Planning Surcharge"
+      ]
+    },
+    "notes": {
+      "billing_terms": "Bills are due and payable when rendered. Full payment must be received on or before the date shown on the bill to avoid a late payment charge pursuant to Rule 26.4.",
+      "term": "One month and continuously from month to month thereafter until permanently terminated on three days\u2019 notice to Company, or one year, and thereafter until terminated as provided in the written application for service.",
+      "charge_for_establishing_and_disconnecting_service": {
+        "charge": 20,
+        "conditions": "Charge applies for field visit to obtain meter reading for establishing or discontinuing service if good reading history exists. Limited to one charge per visit per account. Single charge applies to multiple accounts for same customer at same premise during single visit. Elderly, blind or disabled customers coded as such are exempt."
+      },
+      "raw_extraction_version": "v4-auto",
+      "raw_text_snippet": "SOURCE_PAGES: 155,531,532,533,534,535,536,537,538,539,540,541,542,555,624\n=== SECTION: STATUS: EFFECTIVE ===\n### RAW_TEXT ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### LINES ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### TABLES (json) ###\n[{\"raw\": \"Received: 08/27/2025 Effective D"
+    }
+  },
+  "SC1C": {
+    "service_class": "1-C",
+    "effective_date": "10/01/2025",
+    "customer_charge": {
+      "default": 30.62
+    },
+    "energy_rates": {
+      "per_kwh": 0.03649
+    },
+    "rules": {
+      "demand_determination": "Customers served under this service classification may be subject to adjustments and applied in the manners described in each respective Rule.",
+      "classification_shift": [
+        "Residential customers having professional or commercial operations within an individual dwelling unit that do not meet all of the three qualifications must take service under the General Service Classification.",
+        "Where non-religious uses (meaning use which is neither for religious nor for reasonably incidental purposes) are found to predominate, and such uses can be physically segregated and separately metered and billed from the religious use, the portion of the premises involving religious uses will, provided the customer elects to make the necessary wiring changes that are the customer\u2019s responsibility, receive service under this Service Classification and the portion of the premises involving non-religious uses will receive service under the appropriate non-residential Service Classification.",
+        "Where non-religious uses predominate and such uses cannot be physically segregated and separately metered and billed, the entire premise will receive service under the appropriate non-residential Service Classification."
+      ]
+    },
+    "special_provisions": {
+      "A": "Service under this Service Classification is primarily intended for residential customers residing in individual dwelling units. When minor professional or commercial operations are conducted within the individual dwelling units, service under this Service Classification will be permitted providing all of the following three qualifications are met: a. The minor professional or commercial operations must be exclusively by the residential customer residing at the individual dwelling unit served. Use of the professional or commercial area by another professional person or persons in addition to the resident disqualifies the customer to receive Electric Service or Electricity Supply Service under this Service Classification. b. The area used by the minor professional or commercial operations does not exceed 50 percent of the total cubical content of the individual dwelling unit. c. Not more than two (2) rooms of any size are contained within the 50 percent cubical content of the area used for professional or commercial operations.",
+      "B": "Customers, in good standing, have the option, with the consent of the Company, of paying for service under the Company's Monthly Budget Plan. The plan covers up to twelve months billing and can be started at the customer's option either with the next bill or as of the last bill. If the customer starts budget billing as of the last bill, the last bill is canceled and is rebilled under budget billing. The initial budget amount is based on an average of the preceding twelve months of actual and estimated energy related charges. Monthly budget amounts are reviewed on an ongoing basis and may be changed, as needed, to produce level budget billings through the end of the budget period. The difference between the actual and billed charges will be maintained as a deferred balance. If the Customer decides to end involvement with the program or end service with the Company, the deferred balance will be settled or rolled over for all customers in the twelfth month. Budget bills are due and payable when rendered. Full payment must be received on or before the date shown on the bill to avoid a late payment charge of one and one-half percent (1 1/2%) pursuant to Rule 26.4. If the customer fails to pay the monthly Budget Amount of upon discontinuance of service, the Monthly Budget Payment Plan will be canceled and any deficiency shall be due and payable at once, including any late payment charges assessed. Any overpayment shall be credited to the customer's account. The customer can cancel the plan at any time effective with the customer\u2019s next regularly scheduled billing.",
+      "C": "Net Energy Billing for Customers Operating Solar Electric Generating Equipment\u2013 In accordance with Public Service Law, Section 66-j, customers receiving their electric power requirements from the Company may deliver electricity to the Company generated by Solar Electric Generating Equipment and the Company shall offset such electricity received from the Customer against electricity supplied by the Company to the Customer at other times pursuant to Rule No. 36 of this tariff. Time of Use customers have the option of using either a single bi-directional time of use meter or, two time of use meters, the second meter at the customer\u2019s expense, for the purpose of recording peak and off-peak on-site kWh production. An existing time of use net metering customers taking service before May 29, 2005 may opt for the above metering options and will be responsible for the incremental costs incurred by the Company for these metering options. Customers choosing the option of time of use meters must comply with the provisions of Rule No. 25.1.2 of this Tariff.",
+      "D": "RESERVED FOR FUTURE USE",
+      "E": "The residential rate is applicable to use of service for use predominantly or primarily in connection with religious purposes by corporations or associations organized and conducted in good faith for religious purposes, in accordance with Company policies and procedures. (1) RELIGIOUS PURPOSE The organization shall have a fundamental religious purpose and the property shall be used primarily in support of its purpose. (2) EVIDENCE OF ELIGIBILITY Qualifying religious organizations are eligible for the residential rate. In order to be a qualified religious organization, the organization shall submit evidence of eligibility, which may include any of the following: copies of articles of incorporation as religious corporations, charters, letters from recognized religious organizations, eligibility designations from the Internal Revenue Service and other documentation of the religious nature of the organization. The Company shall not require proof of tax-exempt status as a condition for a religious organization or body to receive the rates under this service classification, although a tax-exempt certificate can be supplied and accepted as supplement to the customer's proof of eligibility. A Company representative(s) interview with the religious organization representative(s) or observations of the organization\u2019s activities may also supplement proof of eligibility. (3) RELIGIOUS AND NON-RELIGIOUS USE Electricity will not be supplied under this Service Classification unless the predominant use of the premises is to carry out religious purposes and or/is reasonably incidental to the religious purpose. Where religious activities and/or activities which are reasonably incidental to the religious purpose take place in the same metered facility with, and share the same space with activities that are neither religious nor reasonably incidental to religious purposes, a predominant use calculation may be employed to determine whether the predominant use of this space is for religious (or reasonably incidental) purposes, as opposed to other purposes, and to determine the applicability of this rate.",
+      "F": "On-Site Generation Special Provision Customers are obligated to certify, subject to the Company's approval, on-site generation (OSG) installations on the Company's Form G, Application For Electric Standby Service, and will be subject to the provisions of Service Classification No. 7 unless the customer has electrically isolated a portion of their load as defined in Rule 1.48 or has installed the OSG to be used exclusively as an Emergency Power System as defined in Rule 1.50",
+      "G": "Net Energy Billing for Certain Customers Operating Farm Waste Electric Generating Equipment - Customers who own or operate farm waste electric generating equipment located and used at the customer\u2019s \u201cFarm Operation\u201d, as defined in Subdivision 11 of Section 301 of the Agriculture and Markets Law, may deliver electricity to the Company generated by the farm waste electric generating system and the Company shall offset such electricity received from the customer against electricity supplied by the Company to the customer at other times pursuant to Rule No. 36 of this Tariff.",
+      "H": "Net Energy Billing for Certain Customers Operating Wind Electric Generating Equipment \u2013 Residential and/or Farm Service Customers, who own or operate one or more wind electric generators located and used at the customer\u2019s residence or for a farm service customer on land used in agricultural production, as defined in subdivision four of Section 301 of the Agriculture and Markets Law and is also the location of the customer\u2019s primary residence, may deliver electricity to the Company generated by the wind electric generating system and the Company shall offset such electricity received from the customer against electricity supplied by the Company to the customer at other times pursuant to Rule No. 37 of this Tariff.",
+      "I": "Energy Affordability Program- Applicants for Energy Affordability Program (EAP) must be the customer of record and provide proof of current enrollment at the time of application in one of the following programs: Temporary Assistance for Needy Families (Family Assistance), Safety Net Assistance \u2013 Public Assistance, Supplemental Security Income (SSI), Medicaid, SNAP (Food Stamps), Low Income Home Energy Assistance Program (LIHEAP), Veteran's Disability Pension, Veteran's Surviving Spouse Pension or Child Health Plus. In addition, a customer may also participate in EAP if they can provide documentation of proof of enrollment in the Federal Lifeline Program or any public assistance program that would qualify under the Federal Lifeline Program. The tiers are described below: Regular Emergency HEAP Payment, and/or Non-Utility HEAP Benefit Self-Identified and File Match Tier 1 Regular HEAP Payment plus 1 add-on Tier 2 Regular HEAP Payment plus 2 add-ons Tier 3 DSS Direct Voucher/Guarantee Tier 4 Customers will be enrolled into the program when the Company receives a HEAP benefit; when the customer is identified through the Office of Temporary and Disability Assistance (\u201cOTDA\u201d) non-utility file matching mechanism; when OTDA (DSS) notifies the Company that the customer is a recipient of Direct Voucher/Guarantee; or when a customer self identifies and provides documentation of a HEAP benefit paid to another vendor or utility and not matched through OTDA\u2019s file matching. Once enrolled, customers with no arrears will be automatically enrolled in the Company\u2019s Monthly Budget Plan as set forth in Special Provision B of this service classification. Customers will be allowed to \u201copt out\u201d of the Monthly Budget Plan. The amount of each tier\u2019s credit can be found on the Statement of Energy Affordability Credit (\u201cEAC\u201d).With the exception of the September 1, 2021 update, the Company will file on an annual basis, the Statement of Energy Affordability Credit on November 1st to become effective December 1st. In addition, any time the Company makes the first tariff compliance filing for a new rate plan, the Company will include an updated Statement of Energy Affordability Credit."
+    },
+    "surcharges": {
+      "list": [
+        "Rule 32.2 - Municipal Undergrounding Surcharge",
+        "Rule 40.1.8 - Value of Distributed Energy Resources\u2019 Customer Benefit Contribution Charge",
+        "Rule 40.3 - Value of Distributed Energy Resource (VDER) Value Stack Cost Recovery Surcharge",
+        "Rule 41 - System Benefits Charge",
+        "Rule 42 - Merchant Function Charge",
+        "Rule 43 - Transmission Revenue Adjustment",
+        "Rule 45 - Non-Wire Alternative Surcharge",
+        "Rule 46 - Supply Service Charges",
+        "Rule 49 - Earnings Adjustment Mechanism",
+        "Rule 50 - Reliability Support Services Surcharge",
+        "Rule 52 - Electric Vehicle Make-Ready Surcharge",
+        "Rule 56 - Energy Storage Surcharge",
+        "Rule 57 - Revenue Decoupling Mechanism",
+        "Rule 59 - Arrears Management Program Recovery (AMP) Surcharge",
+        "Rule 64 - Dynamic Load Management (DLM) Surcharge",
+        "Rule 67 - Rate Adjustment Mechanism (RAM)",
+        "Rule 68 - Other Delivery Surcharges (ODS)",
+        "Rule 69 - Incremental Energy Efficiency (IEE) Surcharge",
+        "Rule 73 - Proactive Planning Surcharge"
+      ]
+    },
+    "notes": {
+      "raw_extraction_version": "v4-auto",
+      "raw_text_snippet": "SOURCE_PAGES: 543,544,545,546,547,548,549,550,551,552,553,554\n=== SECTION: STATUS: EFFECTIVE ===\n### RAW_TEXT ###\nReceived: 01/27/2022 Effective Date: 02/01/2022\n### LINES ###\nReceived: 01/27/2022 Effective Date: 02/01/2022\n### TABLES (json) ###\n[{\"raw\": \"Received: 01/27/2022 Effective Date: 02/01/2"
+    },
+    "_validation_warnings": [
+      "demand_metered should include demand_charges or reactive_charge"
+    ]
+  },
+  "SC2": {
+    "service_class": "SC2",
+    "version": 36,
+    "effective_date": "09/01/2025",
+    "customer_charge": {
+      "default": 25
+    },
+    "energy_rates": {
+      "tier1": {
+        "rate_per_kwh": 0.09902
+      }
+    },
+    "demand_charges": {
+      "basic_service_charge": 65,
+      "special_provision_p": 90.1,
+      "per_kw": 16.99
+    },
+    "special_provisions": {
+      "budget_payment_plan_eligibility": {
+        "excluded_customers": [
+          "Customers who have less than 12 months of billing history at the premises",
+          "Seasonal, short-term or temporary customers",
+          "Customers who have arrears",
+          "Interruptible, temperature-controlled, or dual-fuel customers",
+          "Customers who ceased being billed on a previous budget plan before the end of the plan year in the past 24 months",
+          "Customers whose pattern of consumption is not sufficiently predictable to be estimated on an annual basis with any reasonable degree of certainty"
+        ],
+        "company_procedure": [
+          "Sets forth the method for establishing an eligible customer's monthly budget payment amount which is based on the sum of historic annual charges plus the customer's deferred balance divided by twelve (12)",
+          "Sets forth the method for comparing the actual cost of service rendered, as determined by actual meter readings, to the budget amount, and for adjusting upwards or downwards the budget payment amount to minimize the adjustment required on the final settlement bill. The budget payment amount can be further adjusted to reflect known or anticipated changes",
+          "Provides that during the month of the scheduled settlement, the difference between the cost of service actually used and the amount paid during the plan period (deferred balance) will be rolled over into the next plan year or will be settled at the customer's option"
+        ]
+      },
+      "reserved_for_future_use": [
+        "J",
+        "K"
+      ]
+    },
+    "surcharges": {
+      "list": [
+        "Rule 32.2 - Municipal Undergrounding Surcharge",
+        "Rule 40.1.8 - Value of Distributed Energy Resources\u2019 Customer Benefit Contribution Charge",
+        "Rule 40.3 - Value of Distributed Energy Resource (VDER) Value Stack Cost Recovery Surcharge",
+        "Rule 41 - System Benefits Charge",
+        "Rule 42 - Merchant Function Charge",
+        "Rule 43 - Transmission Revenue Adjustment",
+        "Rule 45 - Non-Wires Alternative Surcharge",
+        "Rule 46 - Supply Service Charges",
+        "Rule 49 - Earnings Adjustment Mechanism",
+        "Rule 50 - Reliability Support Services Surcharge",
+        "Rule 52 - Electric Vehicle Make-Ready Surcharge",
+        "Rule 56 - Energy Storage Surcharge",
+        "Rule 57 - Revenue Decoupling Mechanism",
+        "Rule 59 - Arrears Management Program Recovery (AMP) Surcharge",
+        "Rule 64 - Dynamic Load Management (DLM) Surcharge",
+        "Rule 67 - Rate Adjustment Mechanism (RAM)",
+        "Rule 68 - Other Delivery Surcharges (ODS)",
+        "Rule 69 - Incremental Energy Efficiency (IEE) Surcharge",
+        "Rule 73 - Proactive Planning Surcharge"
+      ]
+    },
+    "notes": {
+      "minimum_monthly_charge": 25,
+      "special_provision_o_charge": 29.42,
+      "monthly_minimum_charge_demand": 81.99,
+      "special_provision_p_minimum_charge": 107.09,
+      "rate_increase_note": "The rates and charges under this Service Classification, including minimum charge, will be increased by a tax factor pursuant to Rule 32",
+      "raw_extraction_version": "v4-auto",
+      "raw_text_snippet": "SOURCE_PAGES: 261,276,556,557,560,562,563\n=== SECTION: STATUS: EFFECTIVE ===\n### RAW_TEXT ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### LINES ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### TABLES (json) ###\n[{\"raw\": \"Received: 08/27/2025 Effective Date: 09/01/2025\", \"headers\": [\"c"
+    }
+  },
+  "SC2D": {
+    "service_class": "SC2D",
+    "effective_date": "09/01/2025",
+    "version": 5,
+    "customer_charge": {
+      "default": 65
+    },
+    "energy_rates": {
+      "tier1": {
+        "distribution_per_kW": 0,
+        "on_peak_per_kWh": 0.0742,
+        "off_peak_per_kWh": 0.0371,
+        "super_peak_per_kWh": 0.11131
+      },
+      "tier2": {
+        "distribution_per_kW": 4.25,
+        "on_peak_per_kWh": 0.05565,
+        "off_peak_per_kWh": 0.02783,
+        "super_peak_per_kWh": 0.08348
+      },
+      "tier3": {
+        "distribution_per_kW": 8.5,
+        "on_peak_per_kWh": 0.0371,
+        "off_peak_per_kWh": 0.01855,
+        "super_peak_per_kWh": 0.05565
+      },
+      "tier4": {
+        "distribution_per_kW": 12.74,
+        "on_peak_per_kWh": 0.01855,
+        "off_peak_per_kWh": 0.00928,
+        "super_peak_per_kWh": 0.02783
+      }
+    },
+    "demand_charges": {
+      "contract_demand_per_kW": 2.91,
+      "as_used_on_peak_per_kW": 0.8484,
+      "as_used_super_peak_per_kW": 1.3936
+    },
+    "special_provisions": {
+      "outage_credits": {
+        "applicable_service_classes": [
+          "SC1",
+          "SC1C",
+          "SC2ND",
+          "SC2D",
+          "SC3",
+          "SC3A",
+          "SC7",
+          "SC4"
+        ],
+        "credit_basis": "proportional to days out of service over 30 days",
+        "credit_application_timeframe_days": 75,
+        "collection_suspension_days": 7,
+        "exclusions": [
+          "customers experiencing Widespread Prolonged Outages eligible under Rule 26.15"
+        ]
+      },
+      "on_site_generation": {
+        "certification_required": true,
+        "form": "Form G",
+        "options_for_contract_demand_less_than_50_kW": [
+          "remain on SC-2D standard service classification",
+          "install interval meter and receive standby rates"
+        ]
+      },
+      "net_energy_billing": {
+        "solar_and_farm_waste": true,
+        "wind": true,
+        "demand_charges_apply": true,
+        "demand_ratchets_or_monthly_minimums_not_adjusted": true
+      },
+      "optional_time_of_use_rate": {
+        "effective_date": "06/01/2012",
+        "rate_periods": {
+          "on_peak": "12:00 p.m. to 8:00 p.m., weekdays, except holidays",
+          "shoulder_peak": "7:00 a.m. to 12:00 p.m. and 8:00 p.m. to 10:00 p.m., weekdays, except holidays",
+          "off_peak": "10:00 p.m. to 7:00 a.m., weekdays and all hours weekends and holidays"
+        },
+        "incremental_customer_charge_per_month": 4.42,
+        "metering_required": true,
+        "term": "One year from commencement and continuously month to month thereafter until canceled with written notice"
+      },
+      "voluntary_hourly_priced_electricity_supply_service": {
+        "effective_date": "06/01/2013",
+        "incremental_customer_charge_per_month": 25.1,
+        "metering_required": true,
+        "term": "One year from commencement and continuously month to month thereafter until canceled with written notice"
+      }
+    },
+    "surcharges": {
+      "list": [
+        "Phase 1 IEDR surcharge",
+        "System Benefits Charge (SBC)",
+        "Energy Efficiency Program Costs (ETIP)",
+        "Transmission Revenue Adjustment (TRA)",
+        "Non-Wires Alternatives (NWA) Incentive Mechanism Surcharge",
+        "Electric Vehicle Make-Ready Surcharge (EVMR)",
+        "Energy Storage Surcharge (ES)",
+        "Dynamic Load Management (DLM) Surcharge"
+      ]
+    },
+    "notes": {
+      "demand_meter_installation": "Required when monthly energy consumption exceeds 2000 kWh for any four consecutive months or connected load indicates consumption will exceed 2000 kWh per month. Demand meter once installed shall not be removed until energy consumption is less than 2000 kWh per month for twelve consecutive months.",
+      "demand_measurement": "Distribution Delivery demand is highest average kW measured in a 15-minute interval during billing period, but not less than one kW nor less than contracted demand.",
+      "late_payment_charge": "One and one-half percent (1.5%) pursuant to Rule 26.4.",
+      "term": "One month and continuously from month to month thereafter until permanently terminated on three days\u2019 notice to Company, or one year and thereafter until terminated as provided in the written application for service.",
+      "raw_extraction_version": "v4-auto",
+      "raw_text_snippet": "SOURCE_PAGES: 156,218,228,308,313,316,333,335,339,342,349,373,377,413,465,506,517,558,559,561,564,565,566,610,621,625,626,646,658,660,661,667,668\n=== SECTION: STATUS: EFFECTIVE ===\n### RAW_TEXT ###\nReceived: 06/23/2011 Effective Date: 09/19/2011\n### LINES ###\nReceived: 06/23/2011 Effective Date: 09/"
+    }
+  },
+  "SC3": {
+    "service_class": "3",
+    "version": 29,
+    "effective_date": "09/01/2025",
+    "customer_charge": {
+      "0-2.2 kV": 775,
+      "2.2-15 kV": 850,
+      "22-50 kV": 1430,
+      "Over 60 kV": 1430
+    },
+    "energy_rates": {
+      "0-2.2 kV": {
+        "distribution_per_kW": 0,
+        "on_peak_per_kWh": 0.01257,
+        "off_peak_per_kWh": 0.00629,
+        "super_peak_per_kWh": 0.01886
+      },
+      "2.2-15 kV": {
+        "distribution_per_kW": 1.02,
+        "on_peak_per_kWh": 0.00943,
+        "off_peak_per_kWh": 0.00472,
+        "super_peak_per_kWh": 0.01415
+      },
+      "22-50 kV": {
+        "distribution_per_kW": 2.04,
+        "on_peak_per_kWh": 0.00629,
+        "off_peak_per_kWh": 0.00314,
+        "super_peak_per_kWh": 0.00943
+      },
+      "Over 60 kV": {
+        "distribution_per_kW": 3.05,
+        "on_peak_per_kWh": 0.00314,
+        "off_peak_per_kWh": 0.00157,
+        "super_peak_per_kWh": 0.00472
+      }
+    },
+    "demand_charges": {
+      "minimum_demand_charges": {
+        "0-2.2 kV": 571.2,
+        "2.2-15 kV": 515.2,
+        "22-50 kV": 162.8,
+        "Over 60 kV": 162.8
+      },
+      "additional_demand_charges": {
+        "0-2.2 kV": 14.28,
+        "2.2-15 kV": 12.88,
+        "22-50 kV": 4.07,
+        "Over 60 kV": 4.07
+      },
+      "reactive_demand_charges_per_RkVA": 0.85
+    },
+    "special_provisions": {
+      "L": {
+        "description": "Electricity Supply Service for Customers 250 kW or Greater",
+        "details": "All customers (except those customers with an existing contract under Service Classification No. 12, receiving an allocation of NYPA power), regardless of voltage level or electricity supplier, with a demand of 250 kW or greater for six (6) consecutive months in a twelve (12) month period will be billed for electricity supply service based on their actual hourly usage. Customers who meet this size requirement and who have an existing contract under Service Classification No. 12, who receive an allocation of NYPA power will be billed for electricity supply service based on their actual hourly usage upon expiration of their contract. All Customers who become eligible for hourly commodity billing will continue to be billed for electricity supply based on their actual hourly usage even if their demand falls below 250 kW. Customers served under this Special Provision L and who take electricity supply service from the Company will be billed at hourly day-ahead market prices as described in Rule 46 herein. All Customers regardless of voltage level or electricity supplier, who meet the size requirement described above will be required to install an interval meter at the Customer Premises and will be subject to an incremental customer charge of 25.10 per month, except Service Classification No. 12 customers who have existing contracts that preclude pricing adjustments. Service Classification No. 12 customers will be subject to the foregoing incremental customer charge only when their contract expires or if they elect to hourly commodity billing prior to contract expiration."
+      },
+      "N": {
+        "description": "Voluntary Electricity Supply Service for SC3 Customers Below 250 KW (Effective June 1, 2013)",
+        "details": "Commencing June 1, 2013, customers served under this Service Classification with usage below 250 kW may elect to be billed for Electricity Supply Service based on their actual hourly usage. Customers electing this Special Provision will be billed at hourly day-ahead market prices as described in Rule 46.1.3 herein. All customers regardless of electricity supplier who voluntarily elect hourly pricing under this Special Provision will be required to install an interval meter at the Customer Premises and will be subject to an incremental customer charge of 25.10 per month. Service under this Special Provision will be subject to the availability of adequate metering equipment to serve Customers voluntarily electing hourly pricing. Customers taking service under this Special Provision will be subject to the Standard Tariff Charges in accordance with this Service Classification."
+      },
+      "M": {
+        "description": "Net Energy Billing for Certain Customers Operating Wind Electric Generating Equipment",
+        "details": "Residential, farm service, and non-residential customers, who own or operate Wind Electric Generating Equipment may deliver electricity to the Company generated by the wind electric generating system and the Company shall offset such electricity received from the customer against electricity supplied by the Company to the customer at other times pursuant to Rule No. 37 of this Tariff. Qualifying demand customers will continue to pay applicable actual demand charges consumed in that billing period. However, the Company will not adjust this demand charge to reflect demand ratchets or monthly demand minimums that might be applied to a standard tariff."
+      },
+      "F": {
+        "description": "On-Site Generation Special Provision",
+        "details": "Customers are obligated to certify, subject to the Company's approval, on-site generation (OSG) installations on the Company's Form G, Application For Electric Standby Service, and will be subject to the provisions of Service Classification No. 7 unless the customer has electrically isolated a portion of their load as defined in Rule 1.48 or has installed the OSG to be used exclusively as an Emergency Power System as defined in Rule 1.50."
+      },
+      "I": {
+        "description": "Waiver of Reactive Demand Charges for Customers Operating AVC",
+        "details": "For customers who operate a generator in excess of 25 MVa or greater and install automatic voltage control (AVC) at their facilities, reactive demand charges shall be waived, within the parameters defined by the Company during the period in which such AVC is operating and maintained in good working order. The Company will not waive start-up reactive demand charges. The initial parameters will be determined by the Company and may be changed subject to system conditions and location of the generating unit. The waiver is subject to the Company's rights to review and approve the customer's AVC system and review its operation and performance for compliance with the system requirements."
+      }
+    },
+    "surcharges": {
+      "list": [
+        "Rule 32.2 - Municipal Undergrounding Surcharge",
+        "Rule 40.3 - Value of Distributed Energy Resource (VDER) Value Stack Cost Recovery Surcharge",
+        "Rule 41 - System Benefits Charges",
+        "Rule 42 - Merchant Function Charge",
+        "Rule 43 - Transmission Revenue Adjustment",
+        "Rule 45 - Non-Wires Alternative Surcharge",
+        "Rule 46 - Supply Service Charges",
+        "Rule 49 - Earnings Adjustment Mechanism",
+        "Rule 50 - Reliability Support Services Surcharge",
+        "Rule 52 - Electric Vehicle Make-Ready Surcharge",
+        "Rule 56 - Energy Storage Surcharge",
+        "Rule 57 - Revenue Decoupling Mechanism",
+        "Rule 59 - Arrears Management Program Recovery (AMP) Surcharge",
+        "Rule 64 - Dynamic Load Management (DLM) Surcharge",
+        "Rule 67 - Rate Adjustment Mechanism (RAM)",
+        "Rule 68 - Other Delivery Surcharges (ODS)",
+        "Rule 69 - Incremental Energy Efficiency (IEE) Surcharge",
+        "Rule 73 - Proactive Planning Surcharge"
+      ]
+    },
+    "notes": {
+      "term": "One year from commencement of service under this service classification or under a service classification superseded by this service classification and continuously thereafter until cancelled by the customer upon ninety days\u2019 prior written notice to the Company. Cancellation by the customer followed by a resumption of service at the same location within one year shall not modify in any way the Determination of Demand as above provided. When the amount of investment by the Company or other conditions of service are such as to warrant, the Company may, with the permission of the Public Service Commission, require that the initial Term be longer than one year and for successive one year Terms thereafter until cancelled effective at the expiration of the initial Term, or of succeeding one year Terms, by the customer giving ninety days\u2019 prior written notice to the Company.",
+      "determination_of_demand": "A. The Distribution Delivery demand for delivery voltage up to 2.2 kV and 2.2-15 kV shall be based on the highest kW measured over any fifteen minute interval during the month, but not less than one-half of the highest such demand occurring during any of the preceding eleven months, nor less than the demand contracted for. B. The Distribution Delivery demand for delivery voltage 22-50 kV and Over 60 kV, shall be the highest kW measured over any fifteen minute interval during the month, but not less than the demand specified for. C. The Reactive Demand shall be based on the highest RkVA of lagging reactive demand measured over a fifteen minute interval during the month less one-third of the highest kW demand measured during the month. Reactive Demand determination shall continue until the demand has been less than 500 kW for twelve consecutive months.",
+      "raw_extraction_version": "v4-auto",
+      "raw_text_snippet": "SOURCE_PAGES: 318,325,340,567,568,569,570,571,572,573,574,575,576,577,578,579,627\n=== SECTION: STATUS: EFFECTIVE ===\n### RAW_TEXT ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### LINES ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### TABLES (json) ###\n[{\"raw\": \"Received: 08/27/2025 Eff"
+    }
+  },
+  "SC3A": {
+    "service_class": "3A",
+    "effective_date": "09/01/2025",
+    "version": 29,
+    "customer_charge": {
+      "0-2.2 kV": 3525,
+      "2.2-15 kV": 3525,
+      "22-50 kV": 4350,
+      "Over 60 kV": 8800
+    },
+    "energy_rates": {
+      "0-2.2 kV": {
+        "tier1": {
+          "distribution_per_kW": 0,
+          "on_peak_per_kWh": 0.04033,
+          "off_peak_per_kWh": 0.02017,
+          "super_peak_per_kWh": 0.0605
+        },
+        "tier2": {
+          "distribution_per_kW": 3.52,
+          "on_peak_per_kWh": 0.03025,
+          "off_peak_per_kWh": 0.01512,
+          "super_peak_per_kWh": 0.04537
+        },
+        "tier3": {
+          "distribution_per_kW": 7.04,
+          "on_peak_per_kWh": 0.02017,
+          "off_peak_per_kWh": 0.01008,
+          "super_peak_per_kWh": 0.03025
+        },
+        "tier4": {
+          "distribution_per_kW": 10.55,
+          "on_peak_per_kWh": 0.01008,
+          "off_peak_per_kWh": 0.00504,
+          "super_peak_per_kWh": 0.01512
+        }
+      },
+      "2.2-15 kV": {
+        "tier1": {
+          "distribution_per_kW": 0,
+          "on_peak_per_kWh": 0.04033,
+          "off_peak_per_kWh": 0.02017,
+          "super_peak_per_kWh": 0.0605
+        },
+        "tier2": {
+          "distribution_per_kW": 3.52,
+          "on_peak_per_kWh": 0.03025,
+          "off_peak_per_kWh": 0.01512,
+          "super_peak_per_kWh": 0.04537
+        },
+        "tier3": {
+          "distribution_per_kW": 7.04,
+          "on_peak_per_kWh": 0.02017,
+          "off_peak_per_kWh": 0.01008,
+          "super_peak_per_kWh": 0.03025
+        },
+        "tier4": {
+          "distribution_per_kW": 10.55,
+          "on_peak_per_kWh": 0.01008,
+          "off_peak_per_kWh": 0.00504,
+          "super_peak_per_kWh": 0.01512
+        }
+      },
+      "22-50 kV": {
+        "tier1": {
+          "distribution_per_kW": 0,
+          "on_peak_per_kWh": 0.01329,
+          "off_peak_per_kWh": 0.00664,
+          "super_peak_per_kWh": 0.01993
+        },
+        "tier2": {
+          "distribution_per_kW": 1.24,
+          "on_peak_per_kWh": 0.00997,
+          "off_peak_per_kWh": 0.00498,
+          "super_peak_per_kWh": 0.01495
+        },
+        "tier3": {
+          "distribution_per_kW": 2.49,
+          "on_peak_per_kWh": 0.00664,
+          "off_peak_per_kWh": 0.00332,
+          "super_peak_per_kWh": 0.00997
+        },
+        "tier4": {
+          "distribution_per_kW": 3.73,
+          "on_peak_per_kWh": 0.00332,
+          "off_peak_per_kWh": 0.00166,
+          "super_peak_per_kWh": 0.00498
+        }
+      },
+      "Over 60 kV": {
+        "tier1": {
+          "distribution_per_kW": 0,
+          "on_peak_per_kWh": 0.01194,
+          "off_peak_per_kWh": 0.00597,
+          "super_peak_per_kWh": 0.0179
+        },
+        "tier2": {
+          "distribution_per_kW": 1.09,
+          "on_peak_per_kWh": 0.00895,
+          "off_peak_per_kWh": 0.00448,
+          "super_peak_per_kWh": 0.01343
+        },
+        "tier3": {
+          "distribution_per_kW": 2.18,
+          "on_peak_per_kWh": 0.00597,
+          "off_peak_per_kWh": 0.00298,
+          "super_peak_per_kWh": 0.00895
+        },
+        "tier4": {
+          "distribution_per_kW": 3.27,
+          "on_peak_per_kWh": 0.00298,
+          "off_peak_per_kWh": 0.00149,
+          "super_peak_per_kWh": 0.00448
+        }
+      }
+    },
+    "demand_charges": {
+      "distribution_delivery_per_kW": {
+        "0-2.2 kV": 14.07,
+        "2.2-15 kV": 14.07,
+        "22-50 kV": 4.97,
+        "Over 60 kV": 4.36
+      },
+      "reactive_demand_charges_per_rkva": 1.02
+    },
+    "special_provisions": {
+      "A": "Combined Metering and Billing: When the Company, pursuant to Rule 25.1.4.3, has provided Electric Service at the customer's single location through more than one Retail Delivery Point, the quantities derived from all necessary meters will be combined for billing purposes in accordance with the provisions of such rule upon the execution of the rider for Combined Metering and Billing attached to Form C.",
+      "B": "Metering Voltage: When a customer provides the high voltage equipment to accept a service voltage higher than 2,200 volts, the Electric Service voltage will be the Company's incoming line voltage. When the Company provides all or part of the high voltage equipment, the service voltage will be the secondary voltage of the Company's transformers. When service is metered at a voltage either higher or lower than the voltage of delivery, metered quantities will be adjusted for billing as provided in Rule 25.4.",
+      "C": "Riders: Service taken under this service classification may be eligible for a limited-duration bill reduction treatment as described in Rule 34, Economic Development Programs.",
+      "D": "RESERVED FOR FUTURE USE",
+      "E": "On-Site Generation Special Provision - Customers are obligated to certify, subject to the Company\u2019s approval, on-site generation (OSG) installations on the Company\u2019s Form G, Application for Electric Standby Service, and will be subject to the provisions of Service Classification No. 7 unless the customer has electrically isolated a portion of their load as defined in Rule 1.48 or has installed the OSG to be used exclusively as an Emergency Power System as defined in Rule 1.50.",
+      "F": "Retail Access: Customers served in this Rate Classification are eligible to participate in the Retail Access Program in accordance with Rule 39, Retail Access Program.",
+      "G": "For customers who operate a generator in excess of 25 MVa or greater and install automatic voltage control (AVC) at their facilities, reactive demand charges shall be waived, with the parameters defined by the Company during the period in which such AVC is operating and maintained in good working order. The Company will not waive start-up reactive demand charges. The initial parameters will be determined by the Company and may be changed subject to system conditions and location of the generating unit. The waiver is subject to the Company's rights to review and approve the customer's AVC system and review its operation and performance for compliance with the system requirements.",
+      "H": "Net Energy Billing for Certain Customers Operating Solar or Farm Waste Electric Generating Equipment- Customers who own or operate Solar Electric Generating Equipment located and used at its premises or Farm Waste Electric Generating Equipment located and used at the customer\u2019s \u2018Farm Operation\u201d, as defined in Subdivision 11 of Section 301 of the Agriculture and Markets Law, may deliver electricity to the Company generated by the solar or farm waste electric generating system and the Company shall offset such electricity received from the customer against electricity supplied by the Company to the customer at other times pursuant to Rule No. 36 of this Tariff. Qualifying demand customers will continue to pay applicable actual demand charges consumed in that billing period. However, the Company will not adjust this demand charge to reflect demand ratchets or monthly demand minimums that might be applied to a standard tariff.",
+      "I": "Net Energy Billing for Certain Customers Operating Solar or Farm Service Electric Generating Equipment - Residential, farm service, and non-residential customers, who own or operate Wind Electric Generating Equipment may deliver electricity to the Company generated by the wind electric generating system and the Company shall offset such electricity received from the customer against electricity supplied by the Company to the customer at other times pursuant to Rule No. 37 of this Tariff. Qualifying demand customers will continue to pay applicable actual demand charges consumed in that billing period. However, the Company will not adjust this demand charge to reflect demand ratchets or monthly demand minimums that might be applied to a standard tariff."
+    },
+    "notes": {
+      "rate_periods": "On-peak hours are defined as the hours between 8:00 a.m. and 10:00 p.m., Monday through Friday, except for the following holidays when such holiday falls on other than a Saturday or a Sunday; New Year\u2019s Day Memorial Day, Independence Day, Labor Day, Thanksgiving Day and Christmas Day. All other hours are defined as off-peak.",
+      "billing_period": "The rates and charges contained in this service classification are based upon a monthly billing period. A monthly billing period is defined as any period consisting of not less than 25 days and not more than 35 days. Bills for shorter or longer periods than defined herein shall be prorated on the basis of the number of elapsed days divided by 30.",
+      "terms_of_payment": "Bills are due and payable when rendered. Full payment must be received on or before the date shown on the bill to avoid a late payment charge of one and one-half percent (1 1/2%) pursuant to Rule 26.4.",
+      "character_of_service": "Continuous. Single or three phase alternating current, approximately 60 Hz, at one standard secondary voltage, or a primary distribution voltage or a transmission voltage. Company will indicate the voltage and type of service available and appropriate for the customer's requirements.",
+      "demand_determination": "Maximum demand shall be determined as the highest demand measured in the billing period. In the event the billing period consists of less than 27 days or more than 35 days, the maximum demand shall be prorated on the basis of the number of elapsed days divided by 30.",
+      "customers_served_before_1998": "When the monthly demand has exceeded 2,000 kW in any two consecutive months of the previous twelve months, or whenever in the Company's opinion the applicant's demand will exceed 2,000 kW in any two consecutive months. A customer once served under this service classification shall remain on this service classification until the monthly measured demand has been 1,500 kW or less for twelve consecutive months following the initial Term of Service, whereupon service may be taken under another appropriate service classification.",
+      "customers_served_after_1998": "When the monthly measured demand has exceeded 2,000 kW in any six consecutive months of the previous twelve months, or whenever in the Company's opinion the applicant's demand will exceed 2,000 kW in any six consecutive months. A customer once served under this service classification shall remain on this service classification until the monthly measured demand has been 1,800 kW or less for six consecutive months following the initial Term of Service, whereupon service shall be taken under the otherwise applicable service classification.",
+      "term": "Except as otherwise provided herein, the Term under this service classification shall be one year from commencement of service and continuously thereafter until permanently canceled by customer upon ninety days' prior written notice to the Company. Cancellation by customer followed by resumption of service at the same location within one year shall not modify in any way the Determination of Demand as above provided. When the amount of an investment by the Company or other conditions of the service are such as to warrant, the Company may, with the permission of Public Service Commission, require that the initial term be longer than one year and for successive one year terms thereafter until canceled effective at the expiration of the initial Term, or of any succeeding one year Term, by customer giving ninety days' prior written notice to Company.",
+      "reactive_demand": "The Reactive Demand shall be the highest average RkVA of lagging reactive demand measured over a fifteen minute interval during the month less one-third of the highest kW demand measured during the month.",
+      "rate_increase": "The rates and charges under this service classification, including System Benefits Charge, will be increased by a tax factor pursuant to Rule 32.",
+      "contract_demand_minimums": "For customers served under Service Classification No. 3 in the twelve months prior to September 1, 1998, the initial demand contracted for in Form C under this service classification for Distribution Delivery Charges shall be no less than the lesser of one-half of the highest demand measured over a fifteen minute interval during any of the most recent twelve months or 1800 kW.",
+      "raw_extraction_version": "v4-auto",
+      "raw_text_snippet": "SOURCE_PAGES: 319,326,341,580,581,582,583,584,585,586,628,645\n=== SECTION: STATUS: EFFECTIVE ===\n### RAW_TEXT ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### LINES ###\nReceived: 08/27/2025 Effective Date: 09/01/2025\n### TABLES (json) ###\n[{\"raw\": \"Received: 08/27/2025 Effective Date: 09/01/2"
+    }
+  }
+}

@@ -1,0 +1,165 @@
+/* =====================================================
+   COLLAPSIBLE SIDEBAR WITH ICONS - Streamlit Custom CSS
+   ===================================================== */
+
+/* -------------------- COLLAPSED STATE -------------------- */
+/* Sidebar container when collapsed */
+[data-testid="stSidebar"][aria-expanded="false"] {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+}
+
+/* Inner sidebar wrapper */
+[data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+    width: 80px !important;
+    min-width: 80px !important;
+}
+
+/* Hide sidebar title when collapsed */
+[data-testid="stSidebar"][aria-expanded="false"] h1 {
+    display: none;
+}
+
+/* Hide logo image when collapsed */
+[data-testid="stSidebar"][aria-expanded="false"] img {
+    display: none;
+}
+
+/* CRITICAL: Keep radio group visible */
+[data-testid="stSidebar"][aria-expanded="false"] [role="radiogroup"] {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Individual radio button labels - MUST be visible */
+[data-testid="stSidebar"][aria-expanded="false"] label[data-baseweb="radio"] {
+    display: flex !important;
+    visibility: visible !important;
+    padding: 12px 8px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-height: 50px !important;
+}
+
+[data-testid="stSidebar"][aria-expanded="false"] label[data-baseweb="radio"]:hover {
+    background-color: rgba(151, 166, 195, 0.15);
+    border-radius: 8px;
+}
+
+/* Hide the actual radio input circle */
+[data-testid="stSidebar"][aria-expanded="false"] input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+/* All text inside radio labels - clever trick to show only emoji */
+[data-testid="stSidebar"][aria-expanded="false"] label[data-baseweb="radio"] p,
+[data-testid="stSidebar"][aria-expanded="false"] label[data-baseweb="radio"] span,
+[data-testid="stSidebar"][aria-expanded="false"] label[data-baseweb="radio"] div {
+    text-align: center !important;
+    font-size: 32px !important;
+    line-height: 1.2 !important;
+    word-spacing: -9999px !important;  /* Hides words but keeps emojis */
+    letter-spacing: normal !important;
+}
+
+/* Tooltip on hover - dark theme */
+[data-testid="stSidebar"][aria-expanded="false"] label[data-baseweb="radio"]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 90px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #1e1e1e;
+    color: #ffffff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    white-space: nowrap;
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+/* Tooltip arrow pointer */
+[data-testid="stSidebar"][aria-expanded="false"] label[data-baseweb="radio"]:hover::before {
+    content: "";
+    position: absolute;
+    left: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 7px solid transparent;
+    border-right-color: #1e1e1e;
+    z-index: 10001;
+    pointer-events: none;
+}
+
+/* -------------------- EXPANDED STATE -------------------- */
+/* Sidebar container when expanded */
+[data-testid="stSidebar"][aria-expanded="true"] {
+    width: 280px !important;
+    min-width: 280px !important;
+}
+
+[data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+    width: 280px !important;
+}
+
+/* Show all elements when expanded */
+[data-testid="stSidebar"][aria-expanded="true"] label[data-baseweb="radio"] span {
+    display: inline !important;
+}
+
+/* -------------------- TOGGLE BUTTON -------------------- */
+/* Collapse/Expand toggle button */
+button[data-testid="collapsedControl"] {
+    background-color: #1f77b4 !important;
+    color: white !important;
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    position: fixed !important;
+    left: 12px !important;
+    top: 12px !important;
+    z-index: 999999 !important;
+    box-shadow: 0 2px 12px rgba(31, 119, 180, 0.4) !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+}
+
+button[data-testid="collapsedControl"]:hover {
+    background-color: #145a8c !important;
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(31, 119, 180, 0.6) !important;
+}
+
+/* Move toggle button when sidebar is expanded */
+[data-testid="stSidebar"][aria-expanded="true"] ~ button[data-testid="collapsedControl"] {
+    left: 252px !important;
+}
+
+/* -------------------- TRANSITIONS -------------------- */
+/* Smooth transitions for sidebar */
+[data-testid="stSidebar"],
+[data-testid="stSidebar"] > div:first-child {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* -------------------- FOOTER STYLING -------------------- */
+/* Footer when collapsed */
+[data-testid="stSidebar"][aria-expanded="false"] .css-1629p8f,
+[data-testid="stSidebar"][aria-expanded="false"] hr + p {
+    font-size: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+[data-testid="stSidebar"][aria-expanded="false"] hr {
+    margin: 16px auto !important;
+    width: 60px !important;
+}

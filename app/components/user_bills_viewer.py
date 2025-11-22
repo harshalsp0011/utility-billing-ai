@@ -88,9 +88,9 @@ def render_user_bills_viewer():
 
     # Extract bill IDs that have anomalies
     issue_bill_ids = set()
-    if not issues_df.empty and "id" in issues_df.columns:
+    if not issues_df.empty and "bill_id" in issues_df.columns:
         issue_bill_ids = (
-            pd.to_numeric(issues_df["id"], errors="coerce")
+            pd.to_numeric(issues_df["bill_id"], errors="coerce")
             .dropna()
             .astype(int)
             .tolist()

@@ -88,6 +88,7 @@ st.sidebar.title("Troy & Banks – Utility Billing AI")
 page_icons = {
     "Upload Files": "📁",
     "User Bills": "📄",
+    "Tariff Details": "📑",
     "Run Workflow": "▶️",
     "Pipeline Monitor": "📊",
     "Reports": "📋"
@@ -139,6 +140,10 @@ if page == "Upload Files":
 elif page == "User Bills":
     from app.components.user_bills_viewer import render_user_bills_viewer
     render_user_bills_viewer()
+
+elif page == "Tariff Details":
+    from app.components.tariff_details_viewer import render_tariff_details_viewer
+    render_tariff_details_viewer()
 
 elif page == "Run Workflow":
     from app.components.workflow_runner import render_workflow_runner

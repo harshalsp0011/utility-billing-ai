@@ -1,0 +1,817 @@
+[
+  {
+    "sc_code": "SC12",
+    "description": "Special Contract Rates - Qualifying Customers under SC12",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 0,
+        "period": "monthly",
+        "note": "Customer charge not explicitly stated in text; assumed to be as per applicable standard tariff."
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * standard_tariff_demand_rate * (1 - discount_percentage)",
+        "condition": "user.billed_demand > 0",
+        "note": "Demand charge is discounted per qualifying program discount percentage applied to the otherwise applicable standard tariff distribution delivery demand charge per kW rate."
+      },
+      {
+        "step_name": "Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * standard_tariff_energy_rate",
+        "condition": "Always",
+        "note": "Energy charge is paid at standard tariff rates; no discount applied."
+      },
+      {
+        "step_name": "Reactive Power Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_rkva * standard_tariff_reactive_rate",
+        "condition": "user.billed_rkva > 0",
+        "note": "Reactive power demand charge paid at standard tariff rates; no discount applied."
+      }
+    ],
+    "discount_logic": {
+      "description": "Discount percentages applied only to the distribution delivery demand charge per kW rate on Contestable Load.",
+      "discounts": [
+        {
+          "program": "Retention: Revitalization",
+          "years": 3,
+          "discount_percentage": 0.15
+        },
+        {
+          "program": "Retention: Relocation",
+          "years": 5,
+          "discount_percentage": 0.15
+        },
+        {
+          "program": "Growth: Business Attraction - Program 1 (Manufacturing or Service Sector Customers except Energy Intensive Manufacturing)",
+          "years": 5,
+          "discount_schedule": {
+            "year_1": 0.2,
+            "year_2": 0.2,
+            "year_3": 0.15,
+            "year_4": 0.15,
+            "year_5": 0.1
+          }
+        },
+        {
+          "program": "Growth: Business Attraction - Program 2 (Energy Intensive Manufacturing Customers)",
+          "years": 5,
+          "discount_schedule": {
+            "year_1": 0.25,
+            "year_2": 0.25,
+            "year_3": 0.2,
+            "year_4": 0.2,
+            "year_5": 0.15
+          }
+        },
+        {
+          "program": "Growth: Business Expansion (Manufacturing or Service Sector Customers)",
+          "years": 5,
+          "discount_schedule": {
+            "year_1": 0.2,
+            "year_2": 0.2,
+            "year_3": 0.2,
+            "year_4": 0.2,
+            "year_5": 0.2
+          }
+        }
+      ],
+      "application": "Discount applies only to the distribution delivery demand charge per kW rate on the Contestable Load portion of demand. Energy and other charges are at standard tariff rates without discount."
+    },
+    "notes": [
+      "Customers pay all adjustments and surcharges as per standard tariff rules, increased by tax factor per Rule 32.",
+      "Customers served under SC-12 are not subject to Rule 42.3.2 and 42.3.3 Merchant Function Charge.",
+      "Discounts apply only to demand charges on Contestable Load; energy charges and other charges are billed at standard tariff rates.",
+      "Customer Service Agreements under SC-12 have terms of 3 or 5 years depending on program.",
+      "Customers must meet eligibility criteria per Section 4 to qualify for discounts.",
+      "Individually negotiated rates are available under Section 6 for qualifying customers with large demand or other criteria."
+    ]
+  },
+  {
+    "sc_code": "SC2-ND",
+    "description": "Small General Service - Non-Demand",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 25.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Distribution Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * 0.09902",
+        "condition": "Always"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC2-D",
+    "description": "Small General Service - Demand",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 65.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 16.99",
+        "condition": "user.billed_demand > 0"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC7-SC1",
+    "description": "Standby Service Customers billed under Parent Service Classification No. 1 \u2013 Residential \u2013 Beginning April 1, 2024",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 19.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Contract Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 5.49",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-peak Daily Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 0.4610",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 1.0179",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Distribution Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * 0.2448",
+        "condition": "Always"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC7-SC2-ND",
+    "description": "Standby Service Customers billed under Parent Service Classification No. 2 Non-Demand \u2013 Beginning April 1, 2024",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 25.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Contract Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 5.91",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-peak Daily Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 0.5168",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 1.1194",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Distribution Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * 0.2751",
+        "condition": "Always"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC7-SC2D",
+    "description": "Standby Service Customers billed under Parent Service Classification No. 2D",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 65.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Contract Demand Charge - SC-7 Delivery",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 2.91",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Contract Demand Charge - SC-7 Phase-In Delivery",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 4.00",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-peak Daily Demand Charge - SC-7 Delivery",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 0.8484",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-peak Daily Demand Charge - SC-7 Phase-In Delivery",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 0.7747",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge - SC-7 Delivery",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 1.3936",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge - SC-7 Phase-In Delivery",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 0.9564",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "Transformer Discount",
+        "charge_type": "formula",
+        "python_formula": "-0.90 * user.billed_demand",
+        "condition": "user.no_transformer == True and user.billed_demand > 0"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC7-SC3",
+    "description": "Standby Service Customers billed under Parent Service Classification No. 3",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge by Delivery Voltage",
+        "charge_type": "fixed_fee_by_tier",
+        "tiers": {
+          "0-2.2 kV": 775.0,
+          "2.2-15 kV": 850.0,
+          "22-50 kV": 1430.0,
+          "Over 60 kV": 1430.0
+        },
+        "period": "monthly"
+      },
+      {
+        "step_name": "Contract Demand Charge - SC-7 Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.21,
+          "2.2-15 kV": 0.45,
+          "22-50 kV": 0.0,
+          "Over 60 kV": 0.0
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Contract Demand Charge - SC-7 Phase-in Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 1.44,
+          "2.2-15 kV": 1.29,
+          "22-50 kV": 0.15,
+          "Over 60 kV": 0.15
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-peak Daily Demand Charge - SC-7 Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.7841,
+          "2.2-15 kV": 0.6626,
+          "22-50 kV": 0.2233,
+          "Over 60 kV": 0.2233
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-peak Daily Demand Charge - SC-7 Phase-in Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.7352,
+          "2.2-15 kV": 0.6387,
+          "22-50 kV": 0.2244,
+          "Over 60 kV": 0.2244
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge - SC-7 Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 1.2826,
+          "2.2-15 kV": 1.0858,
+          "22-50 kV": 0.3645,
+          "Over 60 kV": 0.3645
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge - SC-7 Phase-in Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.9013,
+          "2.2-15 kV": 0.7797,
+          "22-50 kV": 0.2715,
+          "Over 60 kV": 0.2715
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "Reactive Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_rkva * 0.85",
+        "condition": "user.billed_rkva > 0"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC7-SC3A",
+    "description": "Standby Service Customers billed under Parent Service Classification No. 3A",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge by Delivery Voltage",
+        "charge_type": "fixed_fee_by_tier",
+        "tiers": {
+          "0-2.2 kV": 3525.0,
+          "2.2-15 kV": 3525.0,
+          "22-50 kV": 4350.0,
+          "Over 60 kV": 8800.0
+        },
+        "period": "monthly"
+      },
+      {
+        "step_name": "Contract Demand Charge - SC-7 Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.55,
+          "2.2-15 kV": 0.55,
+          "22-50 kV": 0.0,
+          "Over 60 kV": 0.62
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Contract Demand Charge - SC-7 Phase-in Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 1.28,
+          "2.2-15 kV": 1.28,
+          "22-50 kV": 0.21,
+          "Over 60 kV": 0.55
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-Peak Daily Demand Charge - SC-7 Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.7165,
+          "2.2-15 kV": 0.7165,
+          "22-50 kV": 0.2462,
+          "Over 60 kV": 0.184
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used On-Peak Daily Demand Charge - SC-7 Phase-in Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.7041,
+          "2.2-15 kV": 0.7041,
+          "22-50 kV": 0.2464,
+          "Over 60 kV": 0.1991
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge - SC-7 Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 1.1575,
+          "2.2-15 kV": 1.1575,
+          "22-50 kV": 0.402,
+          "Over 60 kV": 0.3049
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "As Used Super-peak Daily Demand Charge - SC-7 Phase-in Delivery by Delivery Voltage",
+        "charge_type": "formula_by_tier",
+        "tiers": {
+          "0-2.2 kV": 0.8511,
+          "2.2-15 kV": 0.8511,
+          "22-50 kV": 0.2983,
+          "Over 60 kV": 0.2394
+        },
+        "python_formula": "user.billed_demand * rate",
+        "condition": "user.opt_in_phase_in_delivery == True and user.billed_demand > 0"
+      },
+      {
+        "step_name": "Reactive Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_rkva * 1.02",
+        "condition": "user.billed_rkva > 0"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC3A",
+    "description": "Large General Service - Time of Use Rate - Customer with Delivery Voltage up to 2.2 kV or 2.2-15 kV",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 3525.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 14.07",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Reactive Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "(user.billed_rkva - (user.billed_demand / 3)) * 1.02",
+        "condition": "(user.billed_rkva - (user.billed_demand / 3)) > 0"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC3A",
+    "description": "Large General Service - Time of Use Rate - Customer with Delivery Voltage 22-50 kV",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 4350.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 4.97",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Reactive Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "(user.billed_rkva - (user.billed_demand / 3)) * 1.02",
+        "condition": "(user.billed_rkva - (user.billed_demand / 3)) > 0"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC3A",
+    "description": "Large General Service - Time of Use Rate - Customer with Delivery Voltage Over 60 kV",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 8800.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * 4.36",
+        "condition": "user.billed_demand > 0"
+      },
+      {
+        "step_name": "Reactive Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "(user.billed_rkva - (user.billed_demand / 3)) * 1.02",
+        "condition": "(user.billed_rkva - (user.billed_demand / 3)) > 0"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC1",
+    "description": "Residential and Farm Service",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 19.0,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Distribution Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * 0.08889",
+        "condition": "Always"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC1-TOU",
+    "description": "Residential Optional Time of Use Delivery and Commodity Rate",
+    "logic_steps": [
+      {
+        "step_name": "Incremental Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 4.42,
+        "period": "monthly",
+        "condition": "Customer elects TOU rate and is not eligible for waiver"
+      },
+      {
+        "step_name": "Distribution Delivery Charge - Super Peak/On Peak",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * 0.11494",
+        "condition": "During Super Peak and On Peak periods"
+      },
+      {
+        "step_name": "Distribution Delivery Charge - Off Peak",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * 0.00970",
+        "condition": "During Off Peak periods"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC1-C",
+    "description": "Residential and Farm Service - Optional Large Time of Use Rate",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 30.62,
+        "period": "monthly"
+      },
+      {
+        "step_name": "Distribution Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * 0.03649",
+        "condition": "Always"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC1H",
+    "description": "Residential and Farm Service Optional Rate - Canceled",
+    "logic_steps": []
+  },
+  {
+    "sc_code": "SC3B",
+    "description": "Interruptible Electric Service - Canceled",
+    "logic_steps": []
+  },
+  {
+    "sc_code": "SC3C",
+    "description": "Combined Firm and Interruptible Electric Service",
+    "logic_steps": [
+      {
+        "step_name": "Status",
+        "charge_type": "note",
+        "value": "Service Classification CANCELED as of document date"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC4-NiagaraPowerDeliveryService",
+    "description": "Niagara Power Delivery Service - Delivery of Replacement and Expansion Power by NYPA",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 0,
+        "period": "monthly",
+        "condition": "Not explicitly stated in text"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand",
+        "condition": "Demand charge based on billed demand for Niagara Power Delivery Service as defined by contract demand or metered demand adjusted for losses"
+      },
+      {
+        "step_name": "Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh",
+        "condition": "Energy billed based on metered kWh adjusted by ratio of billed demand to max demand"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC4-HLFDeliveryService",
+    "description": "High Load Factor (HLF) Delivery Service - Delivery of HLF Power by NYPA",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "formula",
+        "python_formula": "0.9 * parent_customer_charge if user.bill_date < datetime.date(2016,1,1) else 1.0 * parent_customer_charge",
+        "condition": "Effective July 1, 2013 to Jan 1, 2016: 90% of parent service classification customer charge; after Jan 1, 2016: 100%"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "0.9 * parent_demand_charge * user.billed_demand if user.bill_date < datetime.date(2016,1,1) else 1.0 * parent_demand_charge * user.billed_demand",
+        "condition": "Effective July 1, 2013 to Jan 1, 2016: 90% of parent demand charge; after Jan 1, 2016: 100%"
+      },
+      {
+        "step_name": "Distribution Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * distribution_rate_per_kW",
+        "condition": "Distribution delivery rates vary by delivery voltage level and effective date"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC4-PreservationPowerDeliveryService",
+    "description": "Preservation Power Delivery Service - Delivery of Preservation Power by NYPA",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 0,
+        "period": "monthly",
+        "condition": "Not explicitly stated in text"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand",
+        "condition": "Demand billed based on highest 30-minute integrated demand adjusted for losses"
+      },
+      {
+        "step_name": "Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_kwh * (contract_demand / max(contract_demand, max_metered_demand))",
+        "condition": "Energy billed based on metered kWh adjusted by ratio of contract demand to max demand"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC4-SupplementalService",
+    "description": "SC-4 Supplemental Service - Supplemental electric service provided by the Company",
+    "logic_steps": [
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 0,
+        "period": "monthly",
+        "condition": "Customer charge is as per applicable parent service classification"
+      },
+      {
+        "step_name": "Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "max(user.billed_demand - (niagara_power_demand + preservation_power_demand + hlf_demand + edp_pfjr_demand), contracted_sc4_demand, parent_minimum_demand)",
+        "condition": "Demand billed is the greater of the excess demand over other NYPA services, contracted SC-4 demand, or parent minimum demand"
+      },
+      {
+        "step_name": "Energy Charge",
+        "charge_type": "formula",
+        "python_formula": "max(user.billed_kwh - (niagara_power_kwh + preservation_power_kwh + hlf_kwh + edp_pfjr_kwh), 0)",
+        "condition": "Energy billed is the excess kWh over other NYPA services, not exceeding total metered kWh"
+      },
+      {
+        "step_name": "Reactive Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "max(0, user.billed_rkva - (1/3) * user.billed_demand)",
+        "condition": "Reactive demand is highest average RkVA lagging demand less one-third of highest kW demand"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC5",
+    "description": "Combined 25 and 60 Hertz Service",
+    "logic_steps": [
+      {
+        "step_name": "Status",
+        "charge_type": "note",
+        "value": "Service Classification No. 5 is canceled and no longer effective."
+      }
+    ]
+  },
+  {
+    "sc_code": "SC6",
+    "description": "Purchase of Electric Energy and Capacity from Customers with Qualifying On-Site Generation Facilities",
+    "logic_steps": [
+      {
+        "step_name": "Energy Payment",
+        "charge_type": "formula",
+        "python_formula": "sum([Real_Time_LBMPi * Qi for i in range(1, n+1)]) - Incurred_Cost",
+        "condition": "Always",
+        "notes": "Real Time LBMPi is the Real Time LBMP in $/MWh for each generator bus; Qi is energy quantity delivered in kWh per hour; n is number of hours in the month; Incurred Cost includes penalties assessed by NYISO."
+      },
+      {
+        "step_name": "Capacity Payment",
+        "charge_type": "formula",
+        "python_formula": "LBMCP * Capacity",
+        "condition": "Capacity > 0",
+        "notes": "LBMCP is the capacity price for the respective calendar month; Capacity is Unforced Capacity recognized by NYISO, capped at 5000 kW for contracts executed on or after July 1, 2019."
+      },
+      {
+        "step_name": "Minimum Energy Rate",
+        "charge_type": "formula",
+        "python_formula": "max(user.billed_kwh * 0.06, Energy_Payment)",
+        "condition": "Always",
+        "notes": "Rate shall be no less than 6.0 cents per kWh averaged annually and trued-up monthly."
+      },
+      {
+        "step_name": "Non-time Differentiated Energy Payment Option",
+        "charge_type": "formula",
+        "python_formula": "Average_LBMP * user.billed_kwh",
+        "condition": "If interval metering not available and customer elects non-time differentiated basis",
+        "notes": "Average LBMP applies if interval metering is not available."
+      },
+      {
+        "step_name": "Avoided Ancillary Services Payment",
+        "charge_type": "formula",
+        "python_formula": "sum([(Day_Ahead_LBMPi + Avoided_Ancillary_Services_Rate) * Qi for i in range(1, n+1)])",
+        "condition": "For customers selling bundled energy, capacity and ancillary services with generation <= 5 MW",
+        "notes": "Avoided Ancillary Services Rate is calculated from NYISO charges divided by total Ancillary Services MWh purchased."
+      },
+      {
+        "step_name": "Customer Charge",
+        "charge_type": "fixed_fee",
+        "value": 0,
+        "condition": "Customer pays Customer Charge per their otherwise applicable delivery service classification; waived if service taken under both SC-6 and another classification through same connection"
+      },
+      {
+        "step_name": "Buyback Contract Demand Charge",
+        "charge_type": "formula",
+        "python_formula": "user.billed_demand * demand_rate",
+        "condition": "user.billed_demand > 0",
+        "notes": "Demand charge per kW per month based on customer's otherwise applicable service classification; if service under both SC-6 and another classification, applies only to demand in excess of other classification's demand",
+        "demand_rates": {
+          "SC1": 5.49,
+          "SC2ND": 5.91,
+          "SC2D": 2.91,
+          "SC3 Secondary": 0.21,
+          "SC3 Primary": 0.0,
+          "SC3 Subtransmission": 0.0,
+          "SC3 Transmission": 0.0,
+          "SC3A Secondary": 0.0,
+          "SC3A Primary": 0.0,
+          "SC3A Subtransmission": 0.0,
+          "SC3A Transmission": 0.45
+        }
+      },
+      {
+        "step_name": "Buyback Contract Customer Charge",
+        "charge_type": "fixed_fee",
+        "value_map": {
+          "SC1": 19.0,
+          "SC2ND": 25.0,
+          "SC2D": 65.0,
+          "SC3 Secondary": 775.0,
+          "SC3 Primary": 850.0,
+          "SC3 Subtransmission": 1430.0,
+          "SC3 Transmission": 1430.0,
+          "SC3A Secondary": 3525.0,
+          "SC3A Primary": 3525.0,
+          "SC3A Subtransmission": 4350.0,
+          "SC3A Transmission": 8800.0
+        },
+        "condition": "Customer pays Customer Charge per their otherwise applicable delivery service classification; waived if service taken under both SC-6 and another classification through same connection"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC8",
+    "description": "Large General Service - Hourly Integrated Pricing Program",
+    "logic_steps": [
+      {
+        "step_name": "Status",
+        "charge_type": "note",
+        "value": "CANCELED",
+        "period": "N/A"
+      }
+    ]
+  },
+  {
+    "sc_code": "SC9",
+    "description": "Large General Service - Supplemental Hourly Integrated Pricing Program",
+    "logic_steps": []
+  }
+]

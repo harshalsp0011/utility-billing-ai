@@ -1,0 +1,73 @@
+The `group_tariffs_v3` script is designed to be the "Stage 1 Filter" of your pipeline. Its sole job is to ingest a messy, 700-page JSON file and output a clean, structured JSON file (`grouped_tariffs.json`) where pages are grouped by their Service Classification (SC).
+
+Here is the exact logic implemented in the script, step-by-step, so you can trace it or update it later.
+
+### **1. Input Handling & Sorting**
+
+  * **Logic:** The script reads `raw_extracted_tarif.json`.
+  * **Safeguard:** It checks if the data is a list of pages or a dictionary. If it's a dictionary (where keys are page numbers), it converts them into a list and **sorts them numerically** by page number. This ensures we process Page 1 before Page 2, which is critical for stitching text together.
+
+### **2. The Header Detection (The Core Logic)**
+
+  * **Mechanism:** It uses a specific **Regular Expression (Regex)** to find the start of a new section.
+  * **The Regex Pattern:**
+    ```regex
+    ^\s*(?:SERVICE CLASSIFICATION|S\.C\.)\s*(?:NO\.|NUMBER)\s*([0-9]+(?:-[A-Z]|[A-Z])?)
+    ```
+  * **What this matches:**
+      * `SERVICE CLASSIFICATION NO. 1`
+      * `S.C. NO. 3A`
+      * `SERVICE CLASSIFICATION NUMBER 12`
+      * *Matches variations like:* `1`, `1-C`, `3A`, `1H`.
+  * **What this IGNORES (Safety Features):**
+      * It **ignores** "Continued" headers (e.g., `SERVICE CLASSIFICATION NO. 1 (Continued)`). If the ID doesn't change, the script considers it part of the *current* block.
+      * It **ignores** casual mentions like "See SC2D" in the middle of a paragraph because the regex enforces the start of a line or strict naming conventions.
+
+### **3. The "Deep Scan" Window**
+
+  * **The Logic:** For every page, it extracts the first **1000 characters**.
+  * **Why:** In your PDF, some pages (like Page 531) have heavy metadata (timestamps, "Issued By", "Effective Date") at the top. This pushes the actual "Service Classification" header down.
+  * **Correction:** Previous versions scanned only 300 characters and missed these headers. The 1000-character window guarantees the header is seen, even if it starts halfway down the page.
+
+### **4. Grouping & Transition Logic**
+
+The script iterates through pages one by one and makes a decision:
+
+  * **Scenario A: Found a NEW Header (e.g., "SC2")**
+
+    1.  **Stop:** The current section (e.g., "SC1") is finished.
+    2.  **Save:** Write the "SC1" text block to the dictionary with `start_page` and `end_page`.
+    3.  **Start:** Begin a new buffer for "SC2" starting at the current page.
+
+  * **Scenario B: Found the SAME Header (e.g., "SC2 (Continued)")**
+
+    1.  **Continue:** Do nothing. Keep adding this page's text to the current buffer.
+
+  * **Scenario C: Found NO Header (e.g., a middle page of text)**
+
+    1.  **Continue:** If we are currently tracking a valid section (e.g., we are inside "SC2"), add this page to the buffer.
+    2.  **Ignore:** If we haven't found any section yet (e.g., Table of Contents), skip the page.
+
+### **5. Normalization (Standardizing Names)**
+
+  * **The Problem:** The PDF uses `1-C`, `3-A`, `No. 1`.
+  * **The Logic:** The script converts everything to a standard format: `SC` + `Upper Case ID` + `No Hyphens`.
+      * `No. 1` $\rightarrow$ `SC1`
+      * `No. 1-C` $\rightarrow$ `SC1C`
+      * `No. 3A` $\rightarrow$ `SC3A`
+  * **Benefit:** Your database and LLM prompts can simply query "SC1C" without worrying about PDF formatting variations.
+
+### **6. Output Structure**
+
+The final output is a dictionary where the **Key** is the normalized ID.
+
+```json
+"SC3A": {
+    "sc_code": "SC3A",
+    "start_page": 580,
+    "end_page": 586,
+    "full_text": "SERVICE CLASSIFICATION NO. 3A\nLarge General Service..."
+}
+```
+
+This logic ensures that Phase 2 (The LLM) receives a perfectly clean, contiguous block of text for exactly the Service Classification it needs to analyze.

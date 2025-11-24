@@ -1,0 +1,66 @@
+In Phase 2 (extract_logic.py), we moved from grouping text (finding where the pages are) to extracting intelligence (understanding what the pages say).
+
+Here is the breakdown of exactly what we built and why it matters:
+
+1. The Goal: "From Text to Math"
+In Phase 1, we successfully isolated the text for "SC2" or "SC3A". But Python cannot calculate a bill from a string of text like "The charge per month is $17.00".
+
+In Phase 2, we built the Translation Engine. We used the LLM to read that sentence and convert it into a standardized mathematical object:
+
+Input: Raw Text from grouped_tariffs.json
+
+Output: Executable Logic in tariff_definitions.json
+
+2. The Architecture: "Brain" vs. "Body"
+We split the solution into two files to make it robust and maintainable.
+
+A. The "Brain" (tariff_prompts.py)
+This file contains the System Prompt. It is the set of strict instructions that tells the LLM how to behave. We programmed it to:
+
+Enforce Schema: It forbids the LLM from inventing variables. It must use user.billed_kwh or user.billed_demand.
+
+Detect Sub-Classes: We explicitly told it: "If you see rules for 'Demand' and 'Non-Demand' in the same text block, split them into two separate logic objects."
+
+Standardize Output: It forces the output to be clean JSON, not conversational text.
+
+B. The "Body" (extract_logic.py)
+This is the worker script. It handles the mechanics:
+
+Loads Data: Reads the grouped_tariffs.json file.
+
+Iterates: Loops through every rate class (SC1, SC2, etc.) one by one.
+
+API Call: Sends the specific text block + the "Brain" prompt to the OpenAI API.
+
+Sanitization: Cleans up the response (removes Markdown backticks) to ensure valid JSON.
+
+Parsing: Converts the string response into a Python dictionary.
+
+Saves: Writes the final "Standardized Logic Object" (SLO) to tariff_definitions.json.
+
+3. The "Standardized Logic Object" (SLO)
+This is the most critical part of Phase 2. We defined a universal format that our future Audit Engine can read. No matter how complex the PDF is, the output will always look like this:
+
+JSON
+
+{
+  "sc_code": "SC1",
+  "logic_steps": [
+    {
+      "step_name": "Customer Charge",
+      "charge_type": "fixed_fee",
+      "value": 17.00
+    },
+    {
+      "step_name": "Energy Charge",
+      "charge_type": "formula",
+      "python_formula": "user.billed_kwh * 0.08889"
+    }
+  ]
+}
+4. Why We Did It This Way
+Cost Control: We only send specific, grouped text blocks to the LLM, not the whole 700-page PDF.
+
+Accuracy: By defining the variables (user.billed_kwh) in the prompt, we ensure the LLM outputs formulas our code can actually run.
+
+Scalability: If the utility adds a new class ("SC5 - EV Charging"), you don't need to change a single line of code. You just run this script, and the LLM figures out the new logic automatically.

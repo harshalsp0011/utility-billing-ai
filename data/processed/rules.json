@@ -1,0 +1,117 @@
+{
+    "billing_tree": {
+        "root": {
+            "condition": "service_class",
+            "branches": {
+                "sc1": {
+                    "customer_charge": {
+                        "label": "customer_charge[$voltage_level]",
+                        "value": "dynamic",
+                        "formula": "rates.customer_charge[$voltage_level]"
+                    },
+                    "energy_charge": {
+                        "label": "energy_rates.time_of_use",
+                        "value": {
+                            "super_peak_on_peak": 0.11494,
+                            "off_peak": 0.0097
+                        },
+                        "formula": "$$super_peak_kwh * energy_rates.time_of_use.super_peak_on_peak + $$off_peak_kwh * energy_rates.time_of_use.off_peak"
+                    },
+                    "demand_charge": {
+                        "label": "demand_charges.contract_demand_per_kw",
+                        "value": 5.49,
+                        "formula": "$$billed_demand * demand_charges.contract_demand_per_kw"
+                    },
+                    "final_bill": {
+                        "formula": "customer_charge + energy_charge + demand_charge"
+                    }
+                },
+                "sc1c": {
+                    "customer_charge": {
+                        "label": "customer_charge[$voltage_level]",
+                        "value": "dynamic",
+                        "formula": "rates.customer_charge[$voltage_level]"
+                    },
+                    "energy_charge": {
+                        "label": "energy_rates.per_kwh",
+                        "value": 0.03649,
+                        "formula": "$$billed_kwh * energy_rates.per_kwh"
+                    },
+                    "final_bill": {
+                        "formula": "customer_charge + energy_charge"
+                    }
+                },
+                "sc2": {
+                    "customer_charge": {
+                        "label": "customer_charge[$voltage_level]",
+                        "value": "dynamic",
+                        "formula": "rates.customer_charge[$voltage_level]"
+                    },
+                    "demand_charge": {
+                        "label": "demand_charges.per_kw",
+                        "value": 16.99,
+                        "formula": "$$billed_demand * demand_charges.per_kw"
+                    },
+                    "final_bill": {
+                        "formula": "customer_charge + demand_charge"
+                    }
+                },
+                "sc2d": {
+                    "customer_charge": {
+                        "label": "customer_charge[$voltage_level]",
+                        "value": "dynamic",
+                        "formula": "rates.customer_charge[$voltage_level]"
+                    },
+                    "demand_charge": {
+                        "label": "demand_charges.per_kw",
+                        "value": 16.99,
+                        "formula": "$$billed_demand * demand_charges.per_kw"
+                    },
+                    "final_bill": {
+                        "formula": "customer_charge + demand_charge"
+                    }
+                },
+                "sc3": {
+                    "customer_charge": {
+                        "label": "customer_charge[$voltage_level]",
+                        "value": "dynamic",
+                        "formula": "rates.customer_charge[$voltage_level]"
+                    },
+                    "demand_charge": {
+                        "label": "demand_charges.minimum_demand_charges",
+                        "value": {
+                            "0_2_2_kv": 571.2,
+                            "2_2_15_kv": 515.2,
+                            "22_50_kv": 162.8,
+                            "over_60_kv": 162.8
+                        },
+                        "formula": "$$billed_demand * demand_charges.minimum_demand_charges"
+                    },
+                    "final_bill": {
+                        "formula": "customer_charge + demand_charge"
+                    }
+                },
+                "sc3a": {
+                    "customer_charge": {
+                        "label": "customer_charge[$voltage_level]",
+                        "value": "dynamic",
+                        "formula": "rates.customer_charge[$voltage_level]"
+                    },
+                    "demand_charge": {
+                        "label": "demand_charges.distribution_delivery_per_kw",
+                        "value": {
+                            "0_2_2_kv": 14.07,
+                            "2_2_15_kv": 14.07,
+                            "22_50_kv": 4.97,
+                            "over_60_kv": 4.36
+                        },
+                        "formula": "$$billed_demand * demand_charges.distribution_delivery_per_kw"
+                    },
+                    "final_bill": {
+                        "formula": "customer_charge + demand_charge"
+                    }
+                }
+            }
+        }
+    }
+}

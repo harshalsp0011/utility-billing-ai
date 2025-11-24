@@ -1,0 +1,550 @@
+[
+  {
+    "service_class": "SC1",
+    "formula_tree": {
+      "base": "bill_amount = bill_amount + customer_charge['default'] + (energy_rates['default'].per_kwh * billed_kwh)",
+      "conditions": [
+        {
+          "if": {
+            "op": "exists",
+            "path": "energy_rates['time_of_use']"
+          },
+          "then": "bill_amount = bill_amount + (energy_rates['time_of_use'].super_peak_on_peak * billed_kwh_super_peak_on_peak) + (energy_rates['time_of_use'].off_peak * billed_kwh_off_peak)"
+        },
+        {
+          "if": {
+            "op": "exists",
+            "path": "demand_charges"
+          },
+          "then": "bill_amount = bill_amount + (demand_charges.contract_demand_per_kw * billed_demand)"
+        }
+      ]
+    },
+    "data_types": {
+      "root": "object",
+      "service_class": "string",
+      "version": "number",
+      "effective_date": "string",
+      "customer_charge": "object",
+      "customer_charge.default": "number",
+      "energy_rates": "object",
+      "energy_rates.default": "object",
+      "energy_rates.default.per_kwh": "number",
+      "energy_rates.time_of_use": "object",
+      "energy_rates.time_of_use.super_peak_on_peak": "number",
+      "energy_rates.time_of_use.off_peak": "number",
+      "demand_charges": "object",
+      "demand_charges.contract_demand_per_kw": "number",
+      "demand_charges.as_used_on_peak_daily_demand_per_kw": "number",
+      "demand_charges.as_used_super_peak_daily_demand_per_kw": "number",
+      "special_provisions": "object",
+      "special_provisions.A": "string",
+      "special_provisions.B": "string",
+      "special_provisions.C": "string",
+      "special_provisions.D": "string",
+      "special_provisions.E": "string",
+      "special_provisions.F": "string",
+      "special_provisions.G": "string",
+      "special_provisions.H": "string",
+      "special_provisions.I": "string",
+      "special_provisions.J": "string",
+      "special_provisions.K": "string",
+      "special_provisions.L": "string",
+      "special_provisions.M": "string",
+      "special_provisions.N": "string",
+      "surcharges": "object",
+      "surcharges.list": "list<string>",
+      "notes": "object",
+      "notes.billing_terms": "string",
+      "notes.term": "string",
+      "notes.charge_for_establishing_and_disconnecting_service": "object",
+      "notes.charge_for_establishing_and_disconnecting_service.charge": "number",
+      "notes.charge_for_establishing_and_disconnecting_service.conditions": "string",
+      "notes.raw_extraction_version": "string",
+      "notes.raw_text_snippet": "string",
+      "billed_demand": "number",
+      "billed_rkva": "optional",
+      "billed_kwh": "number"
+    }
+  },
+  {
+    "service_class": "SC1C",
+    "formula_tree": {
+      "base": "bill_amount = bill_amount + customer_charge['default'] + (energy_rates.per_kwh * billed_kwh)",
+      "conditions": []
+    },
+    "data_types": {
+      "root": "object",
+      "service_class": "string",
+      "effective_date": "string",
+      "customer_charge": "object",
+      "customer_charge.default": "number",
+      "energy_rates": "object",
+      "energy_rates.per_kwh": "number",
+      "rules": "object",
+      "rules.demand_determination": "string",
+      "rules.classification_shift": "list<string>",
+      "special_provisions": "object",
+      "special_provisions.A": "string",
+      "special_provisions.B": "string",
+      "special_provisions.C": "string",
+      "special_provisions.D": "string",
+      "special_provisions.E": "string",
+      "special_provisions.F": "string",
+      "special_provisions.G": "string",
+      "special_provisions.H": "string",
+      "special_provisions.I": "string",
+      "surcharges": "object",
+      "surcharges.list": "list<string>",
+      "notes": "object",
+      "notes.raw_extraction_version": "string",
+      "notes.raw_text_snippet": "string",
+      "_validation_warnings": "list<string>",
+      "billed_demand": "not required",
+      "billed_rkva": "optional",
+      "billed_kwh": "number"
+    }
+  },
+  {
+    "service_class": "SC2",
+    "formula_tree": {
+      "base": "bill_amount = bill_amount + (energy_rates['tier1'].rate_per_kwh * billed_kwh)",
+      "conditions": []
+    },
+    "data_types": {
+      "root": "object",
+      "service_class": "string",
+      "version": "number",
+      "effective_date": "string",
+      "customer_charge": "object",
+      "customer_charge.default": "number",
+      "energy_rates": "object",
+      "energy_rates.tier1": "object",
+      "energy_rates.tier1.rate_per_kwh": "number",
+      "demand_charges": "object",
+      "demand_charges.basic_service_charge": "number",
+      "demand_charges.special_provision_p": "number",
+      "demand_charges.per_kw": "number",
+      "special_provisions": "object",
+      "special_provisions.budget_payment_plan_eligibility": "object",
+      "special_provisions.budget_payment_plan_eligibility.excluded_customers": "list<string>",
+      "special_provisions.budget_payment_plan_eligibility.company_procedure": "list<string>",
+      "special_provisions.reserved_for_future_use": "list<string>",
+      "surcharges": "object",
+      "surcharges.list": "list<string>",
+      "notes": "object",
+      "notes.minimum_monthly_charge": "number",
+      "notes.special_provision_o_charge": "number",
+      "notes.monthly_minimum_charge_demand": "number",
+      "notes.special_provision_p_minimum_charge": "number",
+      "notes.rate_increase_note": "string",
+      "notes.raw_extraction_version": "string",
+      "notes.raw_text_snippet": "string",
+      "billed_kwh": "number",
+      "billed_demand": "not required",
+      "billed_rkva": "optional"
+    }
+  },
+  {
+    "service_class": "SC2D",
+    "formula_tree": {
+      "base": "bill_amount = bill_amount + customer_charge['default'] + (energy_rates['tier1'].on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates['tier1'].off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates['tier1'].super_peak_per_kWh * billed_super_peak_kwh)",
+      "conditions": [
+        {
+          "if": {
+            "op": "gt",
+            "left": {
+              "var": "billed_demand"
+            },
+            "right": {
+              "const": 0
+            }
+          },
+          "then": "bill_amount = bill_amount + (demand_charges.as_used_on_peak_per_kW * billed_demand)"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "left": {
+              "var": "energy_rate_tier"
+            },
+            "right": {
+              "const": "tier2"
+            }
+          },
+          "then": "bill_amount = bill_amount + (energy_rates['tier2'].on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates['tier2'].off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates['tier2'].super_peak_per_kWh * billed_super_peak_kwh)"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "left": {
+              "var": "energy_rate_tier"
+            },
+            "right": {
+              "const": "tier3"
+            }
+          },
+          "then": "bill_amount = bill_amount + (energy_rates['tier3'].on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates['tier3'].off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates['tier3'].super_peak_per_kWh * billed_super_peak_kwh)"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "left": {
+              "var": "energy_rate_tier"
+            },
+            "right": {
+              "const": "tier4"
+            }
+          },
+          "then": "bill_amount = bill_amount + (energy_rates['tier4'].on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates['tier4'].off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates['tier4'].super_peak_per_kWh * billed_super_peak_kwh)"
+        }
+      ]
+    },
+    "data_types": {
+      "root": "object",
+      "service_class": "string",
+      "effective_date": "string",
+      "version": "number",
+      "customer_charge": "object",
+      "customer_charge.default": "number",
+      "energy_rates": "object",
+      "energy_rates.tier1": "object",
+      "energy_rates.tier1.distribution_per_kW": "number",
+      "energy_rates.tier1.on_peak_per_kWh": "number",
+      "energy_rates.tier1.off_peak_per_kWh": "number",
+      "energy_rates.tier1.super_peak_per_kWh": "number",
+      "energy_rates.tier2": "object",
+      "energy_rates.tier2.distribution_per_kW": "number",
+      "energy_rates.tier2.on_peak_per_kWh": "number",
+      "energy_rates.tier2.off_peak_per_kWh": "number",
+      "energy_rates.tier2.super_peak_per_kWh": "number",
+      "energy_rates.tier3": "object",
+      "energy_rates.tier3.distribution_per_kW": "number",
+      "energy_rates.tier3.on_peak_per_kWh": "number",
+      "energy_rates.tier3.off_peak_per_kWh": "number",
+      "energy_rates.tier3.super_peak_per_kWh": "number",
+      "energy_rates.tier4": "object",
+      "energy_rates.tier4.distribution_per_kW": "number",
+      "energy_rates.tier4.on_peak_per_kWh": "number",
+      "energy_rates.tier4.off_peak_per_kWh": "number",
+      "energy_rates.tier4.super_peak_per_kWh": "number",
+      "demand_charges": "object",
+      "demand_charges.contract_demand_per_kW": "number",
+      "demand_charges.as_used_on_peak_per_kW": "number",
+      "demand_charges.as_used_super_peak_per_kW": "number",
+      "special_provisions": "object",
+      "special_provisions.outage_credits": "object",
+      "special_provisions.outage_credits.applicable_service_classes": "list<string>",
+      "special_provisions.outage_credits.credit_basis": "string",
+      "special_provisions.outage_credits.credit_application_timeframe_days": "number",
+      "special_provisions.outage_credits.collection_suspension_days": "number",
+      "special_provisions.outage_credits.exclusions": "list<string>",
+      "special_provisions.on_site_generation": "object",
+      "special_provisions.on_site_generation.certification_required": "number",
+      "special_provisions.on_site_generation.form": "string",
+      "special_provisions.on_site_generation.options_for_contract_demand_less_than_50_kW": "list<string>",
+      "special_provisions.net_energy_billing": "object",
+      "special_provisions.net_energy_billing.solar_and_farm_waste": "number",
+      "special_provisions.net_energy_billing.wind": "number",
+      "special_provisions.net_energy_billing.demand_charges_apply": "number",
+      "special_provisions.net_energy_billing.demand_ratchets_or_monthly_minimums_not_adjusted": "number",
+      "special_provisions.optional_time_of_use_rate": "object",
+      "special_provisions.optional_time_of_use_rate.effective_date": "string",
+      "special_provisions.optional_time_of_use_rate.rate_periods": "object",
+      "special_provisions.optional_time_of_use_rate.rate_periods.on_peak": "string",
+      "special_provisions.optional_time_of_use_rate.rate_periods.shoulder_peak": "string",
+      "special_provisions.optional_time_of_use_rate.rate_periods.off_peak": "string",
+      "special_provisions.optional_time_of_use_rate.incremental_customer_charge_per_month": "number",
+      "special_provisions.optional_time_of_use_rate.metering_required": "number",
+      "special_provisions.optional_time_of_use_rate.term": "string",
+      "special_provisions.voluntary_hourly_priced_electricity_supply_service": "object",
+      "special_provisions.voluntary_hourly_priced_electricity_supply_service.effective_date": "string",
+      "special_provisions.voluntary_hourly_priced_electricity_supply_service.incremental_customer_charge_per_month": "number",
+      "special_provisions.voluntary_hourly_priced_electricity_supply_service.metering_required": "number",
+      "special_provisions.voluntary_hourly_priced_electricity_supply_service.term": "string",
+      "surcharges": "object",
+      "surcharges.list": "list<string>",
+      "notes": "object",
+      "notes.demand_meter_installation": "string",
+      "notes.demand_measurement": "string",
+      "notes.late_payment_charge": "string",
+      "notes.term": "string",
+      "notes.raw_extraction_version": "string",
+      "notes.raw_text_snippet": "string",
+      "billed_kwh": "number",
+      "billed_demand": "number",
+      "billed_rkva": "optional"
+    }
+  },
+  {
+    "service_class": "SC3",
+    "formula_tree": {
+      "base": "bill_amount = bill_amount + (energy_rates[voltage].on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates[voltage].off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates[voltage].super_peak_per_kWh * billed_super_peak_kwh)",
+      "conditions": [
+        {
+          "if": {
+            "op": "gt",
+            "left": {
+              "var": "billed_demand"
+            },
+            "right": {
+              "const": 0
+            }
+          },
+          "then": "bill_amount = bill_amount + (energy_rates[voltage].distribution_per_kW * billed_demand) + (demand_charges.additional_demand_charges[voltage] * (billed_demand - minimum_demand_threshold)) + (demand_charges.reactive_demand_charges_per_RkVA * billed_reactive_demand)"
+        }
+      ]
+    },
+    "data_types": {
+      "root": "object",
+      "service_class": "number(string)",
+      "version": "number",
+      "effective_date": "string",
+      "customer_charge": "object",
+      "customer_charge.0-2.2 kV": "number",
+      "customer_charge.2.2-15 kV": "number",
+      "customer_charge.22-50 kV": "number",
+      "customer_charge.Over 60 kV": "number",
+      "energy_rates": "object",
+      "energy_rates.0-2.2 kV": "object",
+      "energy_rates.0-2.2 kV.distribution_per_kW": "number",
+      "energy_rates.0-2.2 kV.on_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.off_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.super_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV": "object",
+      "energy_rates.2.2-15 kV.distribution_per_kW": "number",
+      "energy_rates.2.2-15 kV.on_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.off_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.super_peak_per_kWh": "number",
+      "energy_rates.22-50 kV": "object",
+      "energy_rates.22-50 kV.distribution_per_kW": "number",
+      "energy_rates.22-50 kV.on_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.off_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.super_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV": "object",
+      "energy_rates.Over 60 kV.distribution_per_kW": "number",
+      "energy_rates.Over 60 kV.on_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.off_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.super_peak_per_kWh": "number",
+      "demand_charges": "object",
+      "demand_charges.minimum_demand_charges": "object",
+      "demand_charges.minimum_demand_charges.0-2.2 kV": "number",
+      "demand_charges.minimum_demand_charges.2.2-15 kV": "number",
+      "demand_charges.minimum_demand_charges.22-50 kV": "number",
+      "demand_charges.minimum_demand_charges.Over 60 kV": "number",
+      "demand_charges.additional_demand_charges": "object",
+      "demand_charges.additional_demand_charges.0-2.2 kV": "number",
+      "demand_charges.additional_demand_charges.2.2-15 kV": "number",
+      "demand_charges.additional_demand_charges.22-50 kV": "number",
+      "demand_charges.additional_demand_charges.Over 60 kV": "number",
+      "demand_charges.reactive_demand_charges_per_RkVA": "number",
+      "special_provisions": "object",
+      "special_provisions.L": "object",
+      "special_provisions.L.description": "string",
+      "special_provisions.L.details": "string",
+      "special_provisions.N": "object",
+      "special_provisions.N.description": "string",
+      "special_provisions.N.details": "string",
+      "special_provisions.M": "object",
+      "special_provisions.M.description": "string",
+      "special_provisions.M.details": "string",
+      "special_provisions.F": "object",
+      "special_provisions.F.description": "string",
+      "special_provisions.F.details": "string",
+      "special_provisions.I": "object",
+      "special_provisions.I.description": "string",
+      "special_provisions.I.details": "string",
+      "surcharges": "object",
+      "surcharges.list": "list<string>",
+      "notes": "object",
+      "notes.term": "string",
+      "notes.determination_of_demand": "string",
+      "notes.raw_extraction_version": "string",
+      "notes.raw_text_snippet": "string",
+      "billed_demand": "number",
+      "billed_rkva": "optional",
+      "billed_kwh": "number"
+    }
+  },
+  {
+    "service_class": "SC3A",
+    "formula_tree": {
+      "base": "bill_amount = bill_amount + (energy_rates[voltage].tier1.on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates[voltage].tier1.off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates[voltage].tier1.super_peak_per_kWh * billed_super_peak_kwh)",
+      "conditions": [
+        {
+          "if": {
+            "op": "eq",
+            "left": {
+              "var": "tier"
+            },
+            "right": {
+              "const": "tier2"
+            }
+          },
+          "then": "bill_amount = bill_amount + (energy_rates[voltage].tier2.on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates[voltage].tier2.off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates[voltage].tier2.super_peak_per_kWh * billed_super_peak_kwh)"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "left": {
+              "var": "tier"
+            },
+            "right": {
+              "const": "tier3"
+            }
+          },
+          "then": "bill_amount = bill_amount + (energy_rates[voltage].tier3.on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates[voltage].tier3.off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates[voltage].tier3.super_peak_per_kWh * billed_super_peak_kwh)"
+        },
+        {
+          "if": {
+            "op": "eq",
+            "left": {
+              "var": "tier"
+            },
+            "right": {
+              "const": "tier4"
+            }
+          },
+          "then": "bill_amount = bill_amount + (energy_rates[voltage].tier4.on_peak_per_kWh * billed_on_peak_kwh) + (energy_rates[voltage].tier4.off_peak_per_kWh * billed_off_peak_kwh) + (energy_rates[voltage].tier4.super_peak_per_kWh * billed_super_peak_kwh)"
+        },
+        {
+          "if": {
+            "op": "exists",
+            "path": "demand_charges.distribution_delivery_per_kW[voltage]"
+          },
+          "then": "bill_amount = bill_amount + (demand_charges.distribution_delivery_per_kW[voltage] * billed_demand)"
+        }
+      ]
+    },
+    "data_types": {
+      "root": "object",
+      "service_class": "string",
+      "effective_date": "string",
+      "version": "number",
+      "customer_charge": "object",
+      "customer_charge.0-2.2 kV": "number",
+      "customer_charge.2.2-15 kV": "number",
+      "customer_charge.22-50 kV": "number",
+      "customer_charge.Over 60 kV": "number",
+      "energy_rates": "object",
+      "energy_rates.0-2.2 kV": "object",
+      "energy_rates.0-2.2 kV.tier1": "object",
+      "energy_rates.0-2.2 kV.tier1.distribution_per_kW": "number",
+      "energy_rates.0-2.2 kV.tier1.on_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier1.off_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier1.super_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier2": "object",
+      "energy_rates.0-2.2 kV.tier2.distribution_per_kW": "number",
+      "energy_rates.0-2.2 kV.tier2.on_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier2.off_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier2.super_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier3": "object",
+      "energy_rates.0-2.2 kV.tier3.distribution_per_kW": "number",
+      "energy_rates.0-2.2 kV.tier3.on_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier3.off_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier3.super_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier4": "object",
+      "energy_rates.0-2.2 kV.tier4.distribution_per_kW": "number",
+      "energy_rates.0-2.2 kV.tier4.on_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier4.off_peak_per_kWh": "number",
+      "energy_rates.0-2.2 kV.tier4.super_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV": "object",
+      "energy_rates.2.2-15 kV.tier1": "object",
+      "energy_rates.2.2-15 kV.tier1.distribution_per_kW": "number",
+      "energy_rates.2.2-15 kV.tier1.on_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier1.off_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier1.super_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier2": "object",
+      "energy_rates.2.2-15 kV.tier2.distribution_per_kW": "number",
+      "energy_rates.2.2-15 kV.tier2.on_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier2.off_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier2.super_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier3": "object",
+      "energy_rates.2.2-15 kV.tier3.distribution_per_kW": "number",
+      "energy_rates.2.2-15 kV.tier3.on_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier3.off_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier3.super_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier4": "object",
+      "energy_rates.2.2-15 kV.tier4.distribution_per_kW": "number",
+      "energy_rates.2.2-15 kV.tier4.on_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier4.off_peak_per_kWh": "number",
+      "energy_rates.2.2-15 kV.tier4.super_peak_per_kWh": "number",
+      "energy_rates.22-50 kV": "object",
+      "energy_rates.22-50 kV.tier1": "object",
+      "energy_rates.22-50 kV.tier1.distribution_per_kW": "number",
+      "energy_rates.22-50 kV.tier1.on_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier1.off_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier1.super_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier2": "object",
+      "energy_rates.22-50 kV.tier2.distribution_per_kW": "number",
+      "energy_rates.22-50 kV.tier2.on_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier2.off_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier2.super_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier3": "object",
+      "energy_rates.22-50 kV.tier3.distribution_per_kW": "number",
+      "energy_rates.22-50 kV.tier3.on_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier3.off_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier3.super_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier4": "object",
+      "energy_rates.22-50 kV.tier4.distribution_per_kW": "number",
+      "energy_rates.22-50 kV.tier4.on_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier4.off_peak_per_kWh": "number",
+      "energy_rates.22-50 kV.tier4.super_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV": "object",
+      "energy_rates.Over 60 kV.tier1": "object",
+      "energy_rates.Over 60 kV.tier1.distribution_per_kW": "number",
+      "energy_rates.Over 60 kV.tier1.on_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier1.off_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier1.super_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier2": "object",
+      "energy_rates.Over 60 kV.tier2.distribution_per_kW": "number",
+      "energy_rates.Over 60 kV.tier2.on_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier2.off_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier2.super_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier3": "object",
+      "energy_rates.Over 60 kV.tier3.distribution_per_kW": "number",
+      "energy_rates.Over 60 kV.tier3.on_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier3.off_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier3.super_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier4": "object",
+      "energy_rates.Over 60 kV.tier4.distribution_per_kW": "number",
+      "energy_rates.Over 60 kV.tier4.on_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier4.off_peak_per_kWh": "number",
+      "energy_rates.Over 60 kV.tier4.super_peak_per_kWh": "number",
+      "demand_charges": "object",
+      "demand_charges.distribution_delivery_per_kW": "object",
+      "demand_charges.distribution_delivery_per_kW.0-2.2 kV": "number",
+      "demand_charges.distribution_delivery_per_kW.2.2-15 kV": "number",
+      "demand_charges.distribution_delivery_per_kW.22-50 kV": "number",
+      "demand_charges.distribution_delivery_per_kW.Over 60 kV": "number",
+      "demand_charges.reactive_demand_charges_per_rkva": "number",
+      "special_provisions": "object",
+      "special_provisions.A": "string",
+      "special_provisions.B": "string",
+      "special_provisions.C": "string",
+      "special_provisions.D": "string",
+      "special_provisions.E": "string",
+      "special_provisions.F": "string",
+      "special_provisions.G": "string",
+      "special_provisions.H": "string",
+      "special_provisions.I": "string",
+      "notes": "object",
+      "notes.rate_periods": "string",
+      "notes.billing_period": "string",
+      "notes.terms_of_payment": "string",
+      "notes.character_of_service": "string",
+      "notes.demand_determination": "string",
+      "notes.customers_served_before_1998": "string",
+      "notes.customers_served_after_1998": "string",
+      "notes.term": "string",
+      "notes.reactive_demand": "string",
+      "notes.rate_increase": "string",
+      "notes.contract_demand_minimums": "string",
+      "notes.raw_extraction_version": "string",
+      "notes.raw_text_snippet": "string",
+      "billed_demand": "number",
+      "billed_rkva": "optional",
+      "billed_kwh": "number"
+    }
+  }
+]

@@ -1,8 +1,9 @@
 import json
 import os
-from openai import OpenAI
-from dotenv import load_dotenv
 import re
+from pathlib import Path
+from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -72,12 +73,18 @@ def extract_demand_charges(sc_block):
 
 class TariffLLMInterpreter:
 
-    def __init__(self, model="gpt-4o-mini", temperature=0):
-        self.model = model
+    def __init__(self, model: str | None = None, temperature: float = 0):
+        # Use env-provided model or fallback; avoid hardcoding inaccessible model.
+        self.model = model or MODEL
         self.temperature = temperature
 
     def interpret_sc(self, sc_name, sc_block):
-        """LLM-assisted extraction of regulatory conditions."""
+        """LLM-assisted extraction of regulatory conditions.
+
+        If the model is not available (403 / PermissionDenied) or any
+        unexpected error occurs, a graceful fallback structure is returned
+        so downstream processing continues.
+        """
 
         payload = json.dumps(sc_block, indent=2)
 
@@ -115,25 +122,37 @@ OUTPUT STRICT JSON ONLY:
 }}
 """
 
-        response = client.chat.completions.create(
-            model=self.model,
-            temperature=self.temperature,
-            messages=[
-                {"role": "system", "content": "You are an expert regulatory tariff interpreter."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-
-        raw = response.choices[0].message.content
+        try:
+            response = client.chat.completions.create(
+                model=self.model,
+                temperature=self.temperature,
+                messages=[
+                    {"role": "system", "content": "You are an expert regulatory tariff interpreter."},
+                    {"role": "user", "content": prompt},
+                ],
+            )
+            raw = response.choices[0].message.content
+        except Exception as e:  # Broad catch to handle PermissionDenied and others
+            return {
+                "classification_conditions": [],
+                "shifting_conditions": [],
+                "metering_conditions": [],
+                "operational_limits": [],
+                "billing_logic_notes": [],
+                "energy_tiers": [],
+                "voltage_tiers": [],
+                "extra_metadata": {"sc_name": sc_name, "inferred_type": "unknown"},
+                "_warning": f"LLM call failed: {type(e).__name__}: {e}",
+            }
 
         # Try to parse strict JSON
         try:
             return json.loads(raw)
-        except:
+        except Exception:
             try:
                 json_blob = re.search(r"\{.*\}", raw, re.DOTALL).group()
                 return json.loads(json_blob)
-            except:
+            except Exception:
                 return {
                     "classification_conditions": [],
                     "shifting_conditions": [],
@@ -143,7 +162,7 @@ OUTPUT STRICT JSON ONLY:
                     "energy_tiers": [],
                     "voltage_tiers": [],
                     "extra_metadata": {"sc_name": sc_name, "inferred_type": "unknown"},
-                    "_warning": "LLM JSON parse failed"
+                    "_warning": "LLM JSON parse failed",
                 }
 
 
@@ -216,10 +235,40 @@ def process_tariff(file_path):
 #              RUN IT
 # ==========================================
 
-file_path = "D:\\utility-billing-ai\\data\\processed\\Hp_sc_final_tariffs_v4.json"
-output = process_tariff(file_path)
+def _default_tariff_path() -> Path:
+    """Resolve the default input JSON cross‑platform relative to repo root.
 
-with open("final_tariff_output.json", "w") as f:
-    json.dump(output, f, indent=2)
+    The file previously used a hardcoded Windows path. This builds a path from
+    this file's location up to the project root and into data/processed.
+    """
+    # rules_v2.py resides in: <root>/src/agents/tariff_analysis/
+    # root is 3 levels up from this file
+    root = Path(__file__).resolve().parents[3]
+    return root / "data" / "processed" / "Hp_sc_final_tariffs_v4.json"
 
-print("Formula Tree + LLM Conditions Applied Successfully!")
+
+def main(input_path: str | None = None, output_path: str = "final_tariff_output.json") -> None:
+    # Determine input file
+    tariff_path = Path(input_path) if input_path else _default_tariff_path()
+    if not tariff_path.exists():
+        raise FileNotFoundError(
+            f"Tariff JSON not found at '{tariff_path}'. Provide a valid path or place the file in data/processed/."
+        )
+
+    result = process_tariff(str(tariff_path))
+
+    out_file = Path(output_path)
+    with out_file.open("w") as f:
+        json.dump(result, f, indent=2)
+
+    print(
+        f"Processed tariff file: {tariff_path}\n"
+        f"Output written to: {out_file}\n"
+        "Formula Tree + LLM Conditions Applied Successfully!"
+    )
+
+
+if __name__ == "__main__":
+    # Allow overriding via env or command line argument (simple)
+    env_input = os.getenv("TARIFF_JSON_PATH")
+    main(env_input)

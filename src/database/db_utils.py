@@ -631,3 +631,242 @@ WHERE TRIM(ub.bill_account)::text = TRIM(:acct)::text
         logger.info("end of fetch_user_bills_with_issues")
 
 
+# ----------------------------------------------------------------------
+# 7️⃣ Tariff Version & Logic Management
+# ----------------------------------------------------------------------
+
+def get_or_create_tariff_version(conn, utility_name: str, document_id: str, effective_date):
+    """
+    Checks if a tariff version exists for the utility and date.
+    If not, creates a new entry in 'tariff_versions'.
+    Returns the version_id.
+    
+    NOTE: This function expects an active connection (conn) parameter
+    for use within transaction contexts (e.g., extract_logic.py).
+    
+    Parameters
+    ----------
+    conn : SQLAlchemy connection
+        Active database connection (typically within a transaction)
+    utility_name : str
+        Name of utility (e.g., 'National Grid NY')
+    document_id : str
+        Tariff document identifier (e.g., 'PSC 220')
+    effective_date : str or datetime
+        Effective date of tariff version (accepts MM/DD/YYYY or YYYY-MM-DD)
+    
+    Returns
+    -------
+    int
+        The version_id (primary key)
+    """
+    from dateutil import parser as date_parser
+    
+    logger.info("start of get_or_create_tariff_version")
+    logger.info(f"Checking tariff version: {utility_name} | {document_id} | {effective_date}")
+    
+    try:
+        # Normalize date format to YYYY-MM-DD for PostgreSQL
+        if isinstance(effective_date, str):
+            try:
+                parsed_date = date_parser.parse(effective_date)
+                effective_date_normalized = parsed_date.strftime('%Y-%m-%d')
+            except Exception as e:
+                logger.warning(f"Failed to parse date '{effective_date}', using as-is: {e}")
+                effective_date_normalized = effective_date
+        else:
+            effective_date_normalized = effective_date
+        # Check if version exists
+        check_query = text("""
+            SELECT id FROM tariff_versions 
+            WHERE utility_name = :uname 
+              AND tariff_document_id = :doc_id 
+              AND effective_date = :eff_date
+        """)
+        
+        result = conn.execute(check_query, {
+            "uname": utility_name, 
+            "doc_id": document_id, 
+            "eff_date": effective_date_normalized
+        }).fetchone()
+
+        if result:
+            logger.info(f"✓ Found existing tariff version ID: {result[0]}")
+            return result[0]
+
+        # Create new version if not found
+        insert_query = text("""
+            INSERT INTO tariff_versions (utility_name, tariff_document_id, effective_date)
+            VALUES (:uname, :doc_id, :eff_date)
+            RETURNING id
+        """)
+        
+        result = conn.execute(insert_query, {
+            "uname": utility_name, 
+            "doc_id": document_id, 
+            "eff_date": effective_date_normalized
+        }).fetchone()
+        
+        logger.info(f"✅ Created NEW Tariff Version ID: {result[0]} for Date: {effective_date_normalized}")
+        return result[0]
+    
+    except Exception as e:
+        logger.error(f"❌ Failed in get_or_create_tariff_version: {e}")
+        raise
+    finally:
+        logger.info("end of get_or_create_tariff_version")
+
+
+def save_tariff_logic_to_db(conn, version_id: int, definitions: list):
+    """
+    Inserts the extracted logic JSON objects into the 'tariff_logic' table.
+    
+    NOTE: This function expects an active connection (conn) parameter
+    for use within transaction contexts (e.g., extract_logic.py).
+    
+    Parameters
+    ----------
+    conn : SQLAlchemy connection
+        Active database connection (typically within a transaction)
+    version_id : int
+        Foreign key to tariff_versions.id
+    definitions : list of dict
+        List of tariff logic definitions extracted from LLM
+    
+    Returns
+    -------
+    int
+        Count of inserted records
+    """
+    import json
+    logger.info("start of save_tariff_logic_to_db")
+    
+    try:
+        insert_query = text("""
+            INSERT INTO tariff_logic (version_id, sc_code, logic_json)
+            VALUES (:vid, :code, :logic)
+        """)
+        
+        count = 0
+        for item in definitions:
+            sc_code = item.get('sc_code', 'UNKNOWN')
+            logic_json_str = json.dumps(item)
+            
+            conn.execute(insert_query, {
+                "vid": version_id,
+                "code": sc_code,
+                "logic": logic_json_str
+            })
+            count += 1
+        
+        logger.info(f"💾 Inserted {count} tariff logic entries for version_id={version_id}")
+        return count
+    
+    except Exception as e:
+        logger.error(f"❌ Failed to save tariff logic: {e}")
+        raise
+    finally:
+        logger.info("end of save_tariff_logic_to_db")
+
+
+def fetch_tariff_logic_by_version(version_id: int):
+    """
+    Fetch all tariff logic entries for a specific tariff version.
+    
+    Parameters
+    ----------
+    version_id : int
+        The tariff version ID
+    
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns: id, version_id, sc_code, logic_json, etc.
+    """
+    logger.info("start of fetch_tariff_logic_by_version")
+    logger.info(f"Fetching tariff logic for version_id={version_id}")
+    engine = get_engine()
+    
+    try:
+        with engine.connect() as connection:
+            stmt = text("""
+                SELECT id, version_id, sc_code, section_name, charge_type, 
+                       logic_json, condition_text
+                FROM tariff_logic
+                WHERE version_id = :vid
+                ORDER BY sc_code, id
+            """)
+            result = connection.execute(stmt, {"vid": version_id})
+            rows = result.mappings().all()
+            df = pd.DataFrame(rows)
+        
+        logger.info(f"📊 Fetched {len(df)} tariff logic entries for version {version_id}")
+        return df
+    
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch tariff logic: {e}")
+        return pd.DataFrame()
+    finally:
+        logger.info("end of fetch_tariff_logic_by_version")
+
+
+def fetch_tariff_logic_by_sc_code(sc_code: str, effective_date=None):
+    """
+    Fetch tariff logic for a specific service classification code.
+    Optionally filter by effective_date to get the correct version.
+    
+    Parameters
+    ----------
+    sc_code : str
+        Service classification code (e.g., 'SC1', 'SC3A')
+    effective_date : str or datetime, optional
+        If provided, returns logic for this effective date
+    
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with tariff logic entries
+    """
+    logger.info("start of fetch_tariff_logic_by_sc_code")
+    logger.info(f"Fetching tariff logic for SC: {sc_code}")
+    engine = get_engine()
+    
+    try:
+        with engine.connect() as connection:
+            if effective_date:
+                stmt = text("""
+                    SELECT tl.id, tl.version_id, tl.sc_code, tl.section_name, 
+                           tl.charge_type, tl.logic_json, tl.condition_text,
+                           tv.utility_name, tv.tariff_document_id, tv.effective_date
+                    FROM tariff_logic tl
+                    JOIN tariff_versions tv ON tl.version_id = tv.id
+                    WHERE tl.sc_code = :sc 
+                      AND tv.effective_date = :eff_date
+                    ORDER BY tl.id
+                """)
+                result = connection.execute(stmt, {"sc": sc_code, "eff_date": effective_date})
+            else:
+                stmt = text("""
+                    SELECT tl.id, tl.version_id, tl.sc_code, tl.section_name, 
+                           tl.charge_type, tl.logic_json, tl.condition_text,
+                           tv.utility_name, tv.tariff_document_id, tv.effective_date
+                    FROM tariff_logic tl
+                    JOIN tariff_versions tv ON tl.version_id = tv.id
+                    WHERE tl.sc_code = :sc
+                    ORDER BY tv.effective_date DESC, tl.id
+                """)
+                result = connection.execute(stmt, {"sc": sc_code})
+            
+            rows = result.mappings().all()
+            df = pd.DataFrame(rows)
+        
+        logger.info(f"📊 Fetched {len(df)} tariff logic entries for {sc_code}")
+        return df
+    
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch tariff logic for {sc_code}: {e}")
+        return pd.DataFrame()
+    finally:
+        logger.info("end of fetch_tariff_logic_by_sc_code")
+
+

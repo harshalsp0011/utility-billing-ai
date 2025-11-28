@@ -2,6 +2,7 @@
 
 
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from sqlalchemy import ForeignKey
@@ -127,4 +128,29 @@ class SC1RateDetails(Base):
     off_peak = Column(Float)
     super_peak = Column(Float)
     distribution_delivery = Column(String(50))
+
+
+class TariffVersion(Base):
+    """Tariff document version metadata (maps to tariff_versions)."""
+    __tablename__ = "tariff_versions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    utility_name = Column(String(100), nullable=False)  # e.g., 'National Grid NY'
+    tariff_document_id = Column(String(50))             # e.g., 'PSC 220'
+    effective_date = Column(Date, nullable=False)       # e.g., 2023-09-01
+    end_date = Column(Date)                             # null if current
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class TariffLogic(Base):
+    """Calculation logic rules for a given tariff version (maps to tariff_logic)."""
+    __tablename__ = "tariff_logic"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    version_id = Column(Integer, ForeignKey("tariff_versions.id"), nullable=False)
+    sc_code = Column(String(100), nullable=False)        # e.g., 'SC1', 'SC3A', longer composite codes
+    section_name = Column(String(100))                  # e.g., 'Customer Charge'
+    charge_type = Column(String(50))                    # e.g., 'fixed_fee', 'formula'
+    logic_json = Column(JSONB, nullable=False)          # actual math/rule payload
+    condition_text = Column(Text)                       # human-readable condition
 

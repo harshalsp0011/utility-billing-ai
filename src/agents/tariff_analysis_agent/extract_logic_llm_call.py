@@ -1,21 +1,34 @@
 import os
+import sys
 import json
 import time
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
-from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
-import prompts_to_extract_logic  # Importing the prompt file we created above
+
+# --- PATH SETUP ---
+# Ensure we can import from src regardless of where script is run
+# This file is in /src/agents/tariff_analysis_agent/
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+# Import after path setup
+from src.agents.tariff_analysis_agent import prompts_to_extract_logic as tariff_prompts
+from src.database.db_utils import (
+    get_or_create_tariff_version,
+    save_tariff_logic_to_db,
+    get_engine
+)
 
 # Load environment variables
 load_dotenv()
 
-# Configuration
+# --- CONFIGURATION ---
 API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
-DATABASE_URL = os.getenv("DATABASE_URL")  # e.g., postgresql://user:pass@localhost/dbname
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+DATABASE_URL = os.getenv("DB_URL")
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -28,7 +41,6 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set.")
 
 client = OpenAI(api_key=API_KEY)
-db_engine = create_engine(DATABASE_URL)
 
 def clean_json_response(response_text):
     """Helper to strip markdown code blocks if the LLM adds them."""
@@ -38,72 +50,11 @@ def clean_json_response(response_text):
         return response_text.split("```")[1].split("```")[0].strip()
     return response_text.strip()
 
-def get_or_create_tariff_version(conn, utility_name, document_id, effective_date):
+def extract_tariff_logic_hybrid(input_file, output_file):
     """
-    Checks if a tariff version exists for the utility and date.
-    If not, creates a new entry in 'tariff_versions'.
-    Returns the version_id.
+    Extracts logic from text, saves to JSON file AND Database.
     """
-    # 1. Check if version exists
-    check_query = text("""
-        SELECT id FROM tariff_versions 
-        WHERE utility_name = :uname 
-          AND tariff_document_id = :doc_id 
-          AND effective_date = :eff_date
-    """)
-    
-    result = conn.execute(check_query, {
-        "uname": utility_name, 
-        "doc_id": document_id, 
-        "eff_date": effective_date
-    }).fetchone()
-
-    if result:
-        return result[0]
-
-    # 2. Create new version if not found
-    insert_query = text("""
-        INSERT INTO tariff_versions (utility_name, tariff_document_id, effective_date)
-        VALUES (:uname, :doc_id, :eff_date)
-        RETURNING id
-    """)
-    
-    result = conn.execute(insert_query, {
-        "uname": utility_name, 
-        "doc_id": document_id, 
-        "eff_date": effective_date
-    }).fetchone()
-    
-    logger.info(f"Created NEW Tariff Version ID: {result[0]} for Date: {effective_date}")
-    return result[0]
-
-def save_logic_to_db(conn, version_id, definitions):
-    """
-    Inserts the extracted logic JSON objects into the 'tariff_logic' table.
-    """
-    insert_query = text("""
-        INSERT INTO tariff_logic (version_id, sc_code, logic_json)
-        VALUES (:vid, :code, :logic)
-    """)
-    
-    count = 0
-    for item in definitions:
-        sc_code = item.get('sc_code', 'UNKNOWN')
-        
-        # Serialize the logic object to JSON string for storage
-        logic_json_str = json.dumps(item)
-        
-        conn.execute(insert_query, {
-            "vid": version_id,
-            "code": sc_code,
-            "logic": logic_json_str
-        })
-        count += 1
-    
-    return count
-
-def extract_tariff_logic_to_db(input_file):
-    logger.info(f"--- Starting Phase 2: Logic Extraction to Database using {MODEL} ---")
+    logger.info(f"--- Starting Phase 2: Logic Extraction using {MODEL} ---")
     
     if not os.path.exists(input_file):
         logger.error(f"Input file not found: {input_file}")
@@ -112,26 +63,30 @@ def extract_tariff_logic_to_db(input_file):
     with open(input_file, 'r') as f:
         grouped_data = json.load(f)
 
-    # Metadata Context (Could be extracted from filename or args in future)
+    # Context Metadata (In future, extract this dynamically)
     UTILITY_NAME = "National Grid NY"
     DOCUMENT_ID = "PSC 220"
 
+    # List to hold all logic for the JSON file output
+    all_definitions_for_file = []
+
+    # Initialize DB Engine
+    db_engine = get_engine()
+
     try:
-        # Start a DB Transaction
+        # Start ONE transaction for the whole batch
         with db_engine.begin() as conn:
             
-            total_saved = 0
-
-            # Iterate and Process Each SC
+            # Iterate through each SC found in Phase 1
             for sc_code, data in grouped_data.items():
                 logger.info(f"\nProcessing {sc_code}...")
                 raw_text = data.get('full_text', "")
                 
-                # --- DYNAMIC DATE ---
-                # Use the date extracted in Phase 1 (group_tariffs.py)
-                # Fallback to today's date or a default if missing
-                effective_date = data.get('effective_date', '2025-09-01')
+                # --- 1. GET METADATA ---
+                # Use the date extracted in Phase 1 (fallback to today if missing)
+                effective_date = data.get('effective_date')
                 
+                # --- 2. PREPARE DB VERSION ---
                 # Get correct version ID for this specific text block's date
                 version_id = get_or_create_tariff_version(conn, UTILITY_NAME, DOCUMENT_ID, effective_date)
 
@@ -140,12 +95,12 @@ def extract_tariff_logic_to_db(input_file):
                     continue
 
                 try:
-                    # API Call
+                    # --- 3. CALL LLM ---
                     completion = client.chat.completions.create(
                         model=MODEL,
                         messages=[
                             {"role": "system", "content": tariff_prompts.SYSTEM_ROLE},
-                            {"role": "user", "content": tariff_prompts.LOGIC_EXTRACTION_PROMPT + f"\n\n--- TEXT TO ANALYZE ---\n{raw_text}"}
+                            {"role": "user", "content": tariff_prompts.LOGIC_EXTRACTION_PROMPT + f"\n\n--- TEXT TO ANALYZE ---\n{raw_text[:25000]}"}
                         ],
                         temperature=0.0
                     )
@@ -154,7 +109,7 @@ def extract_tariff_logic_to_db(input_file):
                     cleaned_json_str = clean_json_response(response_content)
                     parsed_data = json.loads(cleaned_json_str)
 
-                    # Normalize Output
+                    # Normalize Output to List
                     extracted_tariffs = []
                     if "tariffs" in parsed_data:
                         extracted_tariffs = parsed_data["tariffs"]
@@ -163,10 +118,24 @@ def extract_tariff_logic_to_db(input_file):
                     else:
                         extracted_tariffs = [parsed_data]
 
-                    # Save to DB
-                    saved_count = save_logic_to_db(conn, version_id, extracted_tariffs)
-                    total_saved += saved_count
-                    logger.info(f"   [+] Saved {saved_count} logic blocks for {sc_code} (Date: {effective_date})")
+                    # --- 4. SAVE TO MEMORY (For JSON File) ---
+                    # We verify strict context here to prevent pollution
+                    valid_items = []
+                    for item in extracted_tariffs:
+                        # Optional: Add metadata to the JSON file version for debugging
+                        item['metadata'] = {
+                            "effective_date": effective_date,
+                            "version_id": version_id
+                        }
+                        valid_items.append(item)
+                    
+                    all_definitions_for_file.extend(valid_items)
+
+                    # --- 5. SAVE TO DB (For Production) ---
+                    # Use your centralized util function
+                    saved_count = save_tariff_logic_to_db(conn, version_id, valid_items)
+                    
+                    logger.info(f"   [+] Extracted & Saved {saved_count} blocks for {sc_code} (Date: {effective_date})")
 
                 except json.JSONDecodeError:
                     logger.error(f"   [!] Error: Failed to parse valid JSON from LLM response for {sc_code}")
@@ -175,28 +144,45 @@ def extract_tariff_logic_to_db(input_file):
 
                 time.sleep(1) # Rate limiting
 
-            logger.info(f"\n--- Extraction Complete ---")
-            logger.info(f"Successfully stored {total_saved} tariff logic entries in database.")
+            logger.info("--- Database Transaction Committed ---")
 
     except SQLAlchemyError as e:
         logger.error(f"Database Transaction Failed: {e}")
+        return # Stop if DB fails
 
-def _get_default_input_path():
-    """Resolve default input path relative to repo root."""
+    # --- 6. WRITE JSON FILE ---
+    # This ensures you still have the file for your Streamlit app
+    try:
+        with open(output_file, 'w') as f:
+            json.dump(all_definitions_for_file, f, indent=2)
+        logger.info(f"✅ Backup JSON saved to {output_file}")
+    except Exception as e:
+        logger.error(f"Failed to write JSON file: {e}")
+
+def _get_default_paths():
+    """Resolve default input/output paths relative to repo root."""
+    # Input: grouped_tariffs.json (from Phase 1)
+    # Output: tariff_definitions.json (for Streamlit/Debugging)
     root = Path(__file__).resolve().parents[3]
-    return root / "data" / "processed" / "grouped_tariffs.json"
+    input_path = root / "data" / "processed" / "grouped_tariffs.json"
+    output_path = root / "data" / "processed" / "tariff_definitions.json"
+    return input_path, output_path
 
 if __name__ == "__main__":
-    input_file = _get_default_input_path()
+    input_file, output_file = _get_default_paths()
     
     if not input_file.exists():
         # Fallback for local testing
         if Path("grouped_tariffs.json").exists():
             input_file = Path("grouped_tariffs.json")
+            output_file = Path("tariff_definitions.json")
         else:
             raise FileNotFoundError(
                 f"Input file not found: {input_file}\n"
                 "Please ensure grouped_tariffs.json exists in data/processed/ (run group_tariffs.py first)"
             )
     
-    extract_tariff_logic_to_db(str(input_file))
+    # Ensure output dir exists
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+
+    extract_tariff_logic_hybrid(str(input_file), str(output_file))

@@ -1,106 +1,61 @@
-================================================================================
-                           UTILITY BILLING AI SYSTEM
-================================================================================
+# Utility Billing AI Audit System ⚡📄💰
 
-[ DESCRIPTION ]
-An intelligent automation platform designed to detect billing errors in utility 
-and electricity invoices. The system leverages AI agents to extract data from 
-bills, analyze complex tariff structures, and perform automated cross-checks 
-to identify overcharges or discrepancies.
+**An intelligent, multi-agent AI system for automating utility bill auditing, tariff analysis, and overcharge detection.**
 
-[ FEATURES ]
-- Dashboard UI: A Streamlit-based interface for easy interaction.
-  - Upload & Management: Upload raw bill PDFs and tariff documents.
-  - Viewers: dedicated views for User Bills, Tariff Details, and Reports.
-- AI-Powered Analysis:
-  - Document Extraction: Automated OCR and data extraction from PDF bills.
-  - Tariff Analysis: LLM-driven parsing of tariff rules and rate structures.
-  - Error Detection: Logic to identify discrepancies between billed amounts 
-    and calculated expected costs.
-- Orchestration: Apache Airflow pipelines to manage the end-to-end processing 
-  workflows.
-- Database: PostgreSQL backend for structured data storage.
-- Pipeline Monitoring: Real-time status tracking of data processing tasks.
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Streamlit](https://img.shields.io/badge/Frontend-Streamlit-red) ![Airflow](https://img.shields.io/badge/Orchestration-Airflow-green) ![Docker](https://img.shields.io/badge/Container-Docker-blue)
 
-[ TECH STACK ]
-- Frontend: Streamlit
-- Orchestration: Apache Airflow
-- Backend: Python 3.9+
-- Database: PostgreSQL
-- AI/ML: OpenAI API, LangChain, PDFMiner, PyMuPDF
-- Infrastructure: Docker & Docker Compose
+---
 
-[ PROJECT STRUCTURE ]
-- /app          : Streamlit frontend application code.
-- /src          : Core application logic.
-  - /agents     : AI modules for extraction, comparison, and validation.
-  - /database   : Database models and connection utilities.
-  - /orchestrator: Logic for task scheduling and workflow management.
-- /airflow      : Airflow DAGs (Directed Acyclic Graphs) and configuration.
-- /data         : Directory for raw inputs (PDFs) and processed outputs (JSON/CSV).
-- /tests        : Unit and integration tests.
+## 📖 Project Overview
 
-================================================================================
-                               SETUP INSTRUCTIONS
-================================================================================
+Commercial utility bills are complex, and manual auditing is prone to errors. **Utility Billing AI** is an automated pipeline that ingests raw utility bills (PDFs) and Tariff documents, extracts structured data using LLMs, and validates charges against official rate cards to detect discrepancies.
 
-METHOD 1: DOCKER (Recommended)
-1. Ensure Docker and Docker Compose are installed.
-2. Create a .env file in the root directory (see Environment Variables below).
-3. Build and start the services:
-   docker-compose up --build -d
-4. Access the services:
-   - Streamlit UI: http://localhost:8501
-   - Airflow UI:   http://localhost:8080 (Default User/Pass is usually admin/admin 
-     or as printed in logs)
+This project utilizes a **Multi-Agent Architecture** to handle distinct tasks like document extraction, rule processing, and financial comparison.
 
-METHOD 2: LOCAL PYTHON VENV (Development)
-1. Create and activate a virtual environment:
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-2. Install dependencies:
-   pip install -r requirements.txt
-3. Set up the database (Postgres must be running locally).
-4. Run the Streamlit app:
-   streamlit run app/streamlit_app.py
+---
 
-[ ENVIRONMENT VARIABLES ]
-Create a `.env` file in the root directory with the following keys:
+## 🏗️ System Architecture
 
-# Database
-POSTGRES_USER=airflow
-POSTGRES_PASSWORD=airflow
-POSTGRES_DB=airflow
-POSTGRES_PORT=5432
+The application is built on a micro-component architecture orchestrated by **Apache Airflow**:
 
-# Airflow
-AIRFLOW_UID=50000
+1.  **Frontend (Streamlit):** User interface for uploading bills and viewing audit reports.
+2.  **Orchestrator (Airflow):** Manages the dependency pipeline (Extraction $\rightarrow$ Analysis $\rightarrow$ Reporting).
+3.  **Agentic Core (`src/agents`):**
+    * **Document Processor:** Extracts consumption and cost data from PDF bills.
+    * **Tariff Analyzer:** Parses complex tariff documents (PDF/Text) to extract billing rules and rates.
+    * **Bill Validator:** Cross-checks extracted bill data against calculated expected costs.
+    * **Error Detector:** Flags anomalies, missing data, or threshold breaches.
+4.  **Database:** Stores processed bills, tariff definitions, and audit results.
 
-# AI Services
-OPENAI_API_KEY=your_openai_api_key
+---
 
-================================================================================
-                               USAGE GUIDE
-================================================================================
+## 🚀 Key Features
 
-1. Upload Data:
-   Navigate to the "Upload Files" section in the UI to upload PDF utility bills 
-   or tariff documents.
+* **📄 Automated PDF Extraction:** Converts messy utility bill PDFs into structured CSV/JSON data using AI.
+* **⚖️ Tariff Rule Engine:** Intelligent parsing of "Service Classification" (SC) documents to understand rate structures.
+* **🔍 Overcharge Detection:** Automatically compares the *billed amount* vs. the *calculated amount* based on official tariffs.
+* **📊 Interactive Dashboard:** Streamlit-based UI to visualize usage trends and audit summaries.
+* **⚡ Airflow Pipelines:** Robust DAGs for handling full extraction and validation workflows.
 
-2. Run Workflow:
-   Go to "Run Workflow" to trigger the processing pipeline. This initiates the 
-   Airflow DAGs that extract data, apply tariff rules, and compute discrepancies.
+---
 
-3. Monitor Progress:
-   Use the "Pipeline Monitor" page to see the status of extraction and analysis 
-   tasks.
+## 📂 Repository Structure
 
-4. View Reports:
-   Once processing is complete, check the "Reports" section for a breakdown of 
-   detected errors and potential savings.
-
-================================================================================
-                               LICENSE
-================================================================================
-[License information not explicitly provided in file list, but standard project 
-proprietary or open-source license applies.]
+```text
+utility-billing-ai/
+├── airflow/                # Airflow DAGs and configuration
+├── app/                    # Streamlit frontend application
+│   ├── components/         # UI widgets (File Uploader, Reports Viewer)
+│   └── streamlit_app.py    # Main entry point for UI
+├── data/                   # Raw PDFs and processed JSON/CSV data
+├── src/                    # Core Application Logic
+│   ├── agents/             # AI Agents
+│   │   ├── bill_comparison/   # Logic to compare calculated vs actual
+│   │   ├── document_processor/# PDF extraction logic
+│   │   ├── tariff_analysis/   # LLM extraction of tariff rules
+│   │   └── validation/        # Data validation agents
+│   ├── database/           # DB Models and Utils
+│   ├── orchestrator/       # Task schedulers
+│   └── utils/              # LLM clients, logging, config
+├── docker-compose.yml      # Container orchestration
+└── requirements.txt        # Python dependencies

@@ -7,10 +7,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import tariff_prompts  # Importing the prompt file we created above
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Configuration
 API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 

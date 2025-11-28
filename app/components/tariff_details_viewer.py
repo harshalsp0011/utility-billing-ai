@@ -46,27 +46,39 @@ def _render_logic_step(step):
     
     st.markdown(f"#### {icon} {name}")
     
-    c1, c2, c3 = st.columns([1, 1, 2])
+    c1, c2, c3 = st.columns([1, 2, 1])
     with c1:
         st.caption("Charge Type")
         st.markdown(f"**{c_type.replace('_',' ').title()}**")
     
     with c2:
-        st.caption("Value")
-        if c_type == "fixed_fee":
-            val = step.get("value", 0)
-            st.metric("Amount", f"${val}", label_visibility="collapsed")
+        st.caption("Logic / Value")
+        val = step.get("value")
+        
+        # --- HANDLE COMPLEX VALUES (DICTIONARIES) ---
+        if isinstance(val, dict):
+            # It's a lookup table (e.g., Voltage Levels)
+            st.markdown("**Variable Rate Table:**")
+            for k, v in val.items():
+                # Format currency if it looks like a number
+                try:
+                    v_formatted = f"${float(v):,.2f}"
+                except:
+                    v_formatted = str(v)
+                st.write(f"- **{k}**: {v_formatted}")
+        
+        # --- HANDLE SIMPLE VALUES ---
+        elif c_type == "fixed_fee":
+            st.metric("Amount", f"${float(val):,.2f}", label_visibility="collapsed")
         elif c_type == "per_kwh":
-             val = step.get("value", 0)
-             st.metric("Rate", f"${val:.5f}/kWh", label_visibility="collapsed")
+             st.metric("Rate", f"${float(val):.5f}/kWh", label_visibility="collapsed")
         elif c_type == "formula":
             # Some formulas might be just code
             formula = step.get("python_formula", "N/A")
             st.code(formula, language="python")
         else:
              # Fallback for other types like 'per_kw' if present
-             val = step.get("value", "N/A")
-             st.write(val)
+             st.write(val if val is not None else "N/A")
 
     with c3:
          # Show unit or formula details if available

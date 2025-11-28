@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
-import tariff_prompts
+import src.agents.audit_calculation_agent.prompts_to_rule_engine as prompts_to_rule_engine
 
 load_dotenv()
 
@@ -43,8 +43,8 @@ def extract_tariff_logic(input_file, output_file):
             completion = client.chat.completions.create(
                 model=MODEL,
                 messages=[
-                    {"role": "system", "content": tariff_prompts.SYSTEM_ROLE},
-                    {"role": "user", "content": tariff_prompts.LOGIC_EXTRACTION_PROMPT + f"\n\n--- TEXT TO ANALYZE ---\n{raw_text}"}
+                    {"role": "system", "content": prompts_to_rule_engine.SYSTEM_ROLE},
+                    {"role": "user", "content": prompts_to_rule_engine.LOGIC_EXTRACTION_PROMPT + f"\n\n--- TEXT TO ANALYZE ---\n{raw_text}"}
                 ],
                 temperature=0.0
             )

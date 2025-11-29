@@ -511,7 +511,7 @@ def save_tariff_logic_version(doc_id: int, logic_item: dict) -> bool:
     try:
         sc_code = logic_item.get("sc_code")
         meta = logic_item.get("metadata", {})
-        effective_date_str = meta.get("effective_date", "2025-01-01")
+        effective_date_str = meta.get("effective_date")
 
         # Normalize date to YYYY-MM-DD
         effective_date = dateparser.parse(effective_date_str).date()
@@ -529,6 +529,7 @@ def save_tariff_logic_version(doc_id: int, logic_item: dict) -> bool:
         if existing:
             existing.logic_json = clean_logic
             existing.tariff_document_id = doc_id
+            logger.info(f"Found existing tariff logic version for sc={sc_code} eff={effective_date}, updating...")
         else:
             new_ver = TariffLogicVersion(
                 tariff_document_id=doc_id,

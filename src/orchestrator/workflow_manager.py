@@ -30,7 +30,7 @@ import time
 from datetime import datetime
 from src.utils.logger import get_logger
 from src.database.db_utils import (
-    insert_raw_document,
+    insert_raw_bill_document,
     update_document_status,
     insert_processed_data,
     insert_validation_result,
@@ -62,8 +62,8 @@ def run_document_processor():
         "source": "City of Hampton",
         "status": "processed"
     }
-    insert_raw_document(metadata)
-    logger.info("after calling of insert_raw_document(metadata)")
+    insert_raw_bill_document(metadata)
+    logger.info("after calling of insert_raw_bill_document(metadata)")
     logger.info("✅ Document Processor completed.")
     logger.info("end of document_processor")
     return True

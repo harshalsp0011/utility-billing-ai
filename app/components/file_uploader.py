@@ -16,7 +16,7 @@ Each upload:
 import streamlit as st
 from pathlib import Path
 from datetime import datetime
-from src.database.db_utils import insert_raw_document
+from src.database.db_utils import insert_raw_bill_document
 
 def render_file_uploader():
     st.title("File Uploads")
@@ -50,7 +50,7 @@ def render_file_uploader():
                 "status": "uploaded"
             }
             try:
-                insert_raw_document(metadata)
+                insert_raw_bill_document(metadata)
                 st.success(f"Bill file uploaded and logged: {file.name}")
             except Exception as e:
                 st.error(f"Error logging bill file {file.name}: {e}")
@@ -84,7 +84,7 @@ def render_file_uploader():
                 "status": "uploaded"
             }
             try:
-                insert_raw_document(metadata)
+                insert_raw_bill_document(metadata)
                 st.success(f"Tariff file uploaded and logged: {file.name}")
             except Exception as e:
                 st.error(f"Error logging tariff file {file.name}: {e}")

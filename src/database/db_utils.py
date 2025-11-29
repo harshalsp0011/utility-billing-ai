@@ -15,17 +15,17 @@ Dependencies:
 - src.utils.config (for DB_URL)
 - src.database.models (ORM classes)
 """
-
+from dateutil import parser as dateparser
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
 from datetime import datetime
 from sqlalchemy import text
+from typing import Union, Optional
 from src.utils.config import DB_URL
 from src.utils.logger import get_logger
-from src.database.models import BillValidationResult, RawBillDocument, ProcessedData, ValidationResult,PipelineRun, UserBills
-from src.database.models import ServiceClassification, SC1RateDetails
+from src.database.models import BillValidationResult, RawBillDocument,PipelineRun, UserBills
 from src.database.models import TariffDocument, TariffLogicVersion
 
 
@@ -238,7 +238,7 @@ def insert_user_bills_bulk(df: pd.DataFrame):
 
 
 
-def fetch_user_bills(account_id: str | None = None):
+def fetch_user_bills(account_id: Optional[str] = None):
     """
     Fetch all user bills.
     Optionally filter by bill_account.
@@ -392,7 +392,7 @@ def update_bill_validation_result(result_id: int, updates: dict):
         session.close()
 
 
-def fetch_user_bills_with_issues(account_id: str, issue_type: str | None = None):
+def fetch_user_bills_with_issues(account_id: str, issue_type: Optional[str] = None):
     """
     Fetch ONLY the user bills that have validation issues
     for the given account_id.
@@ -461,7 +461,7 @@ WHERE TRIM(ub.bill_account)::text = TRIM(:acct)::text
 # 7️⃣ Tariff Version & Logic Management (ORM, session.query)
 # ----------------------------------------------------------------------
 
-def register_tariff_document(filename: str, utility_name: str, document_version: str | None = None, description: str | None = None) -> int:
+def register_tariff_document(filename: str, utility_name: str, document_version: Optional[str] = None, description: Optional[str] = None) -> int:
     """
     Register or update a tariff document and return its id.
     - Uses ORM with session.query (no raw SQL / conn).
@@ -549,14 +549,14 @@ def save_tariff_logic_version(doc_id: int, logic_item: dict) -> bool:
         logger.info("end of save_tariff_logic_version")
         session.close()
 
-def fetch_logic_for_audit(sc_code: str, bill_date: str | datetime.date) -> dict | None:
+def fetch_logic_for_audit(sc_code: str, bill_date: Union[str, datetime.date]) -> Optional[dict]:
     """
     Time Machine lookup: find the logic active on bill_date for sc_code.
     - Accepts bill_date as string or date; normalizes to date.
     - Uses ORM with session.query ordering by effective_date DESC.
     - Returns the stored JSON object (dict) or None if not found.
     """
-    from dateutil import parser as dateparser
+
 
     logger.info("start of fetch_logic_for_audit")
     session = get_session()

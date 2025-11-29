@@ -1,46 +1,30 @@
 [
   {
     "sc_code": "SC12",
-    "description": "Special Contract Rates",
+    "description": "Special Contract Rates - Service Classification No. 12",
+    "notes": "This classification provides discounted rates to qualifying customers who meet eligibility criteria and execute a Customer Service Agreement. Rates are negotiated individually or based on standardized discounts related to other SC rates (SC-2D, SC-3, SC-3A, SC-4, SC-7). This tariff does not specify explicit charges but references eligibility and discount programs.",
     "logic_steps": [
       {
-        "step_name": "Applicability",
-        "note": "Service under SC12 is available to Non-Residential Customers eligible under SC-2D, SC-3, SC-3A, SC-4, and SC-7, subject to eligibility criteria and Company discretion."
-      },
-      {
-        "step_name": "Customer Charge",
+        "step_name": "Reference to Standard Tariff Rates",
         "charge_type": "reference",
-        "reference": "Customer charges are as per the applicable standard tariff rates SC-2D, SC-3, SC-3A, SC-4, or SC-7."
-      },
-      {
-        "step_name": "Energy Charge",
-        "charge_type": "reference",
-        "reference": "Energy charges are as per the applicable standard tariff rates SC-2D, SC-3, SC-3A, SC-4, or SC-7."
-      },
-      {
-        "step_name": "Demand Charge",
-        "charge_type": "reference",
-        "reference": "Demand charges are as per the applicable standard tariff rates SC-2D, SC-3, SC-3A, SC-4, or SC-7."
+        "reference_to": [
+          "SC-2D",
+          "SC-3",
+          "SC-3A",
+          "SC-4",
+          "SC-7"
+        ],
+        "note": "Rates for SC12 customers are based on or discounted from these standard tariff rates depending on eligibility and negotiated agreements."
       },
       {
         "step_name": "Minimum Bill",
         "charge_type": "minimum_bill",
-        "note": "Customers receiving service under SC12 are subject to a Minimum Bill provision as defined in the tariff."
-      },
-      {
-        "step_name": "Discounts and Negotiated Rates",
-        "note": "Qualifying Customers may receive standardized discounts or negotiate individual rates under Section 5 or 6 of SC12, based on eligibility and Company discretion."
+        "note": "Customers receiving service under SC12 are subject to a minimum bill provision, details not specified in this text."
       }
-    ],
-    "notes": [
-      "SC12 does not define explicit standalone charges; it references standard tariff rates of SC-2D, SC-3, SC-3A, SC-4, and SC-7.",
-      "Discounts and eligibility criteria are programmatic and handled via Customer Service Agreements.",
-      "No explicit numeric rates or formulas are provided in this text for SC12 charges.",
-      "Charges and rates should be derived from the referenced standard tariff rates applicable to the customer."
     ],
     "metadata": {
       "effective_date": "04/01/2018",
-      "version_id": 28
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -57,7 +41,8 @@
         "step_name": "Customer Charge - Special Provision O",
         "charge_type": "fixed_fee",
         "value": 29.42,
-        "period": "monthly"
+        "period": "monthly",
+        "note": "Applies under Special Provision O"
       },
       {
         "step_name": "Energy Charge",
@@ -67,20 +52,28 @@
       },
       {
         "step_name": "Monthly Minimum Charge",
-        "charge_type": "minimum_fee",
+        "charge_type": "minimum_charge",
         "value": 25.0,
         "period": "monthly"
       },
       {
         "step_name": "Monthly Minimum Charge - Special Provision O",
-        "charge_type": "minimum_fee",
+        "charge_type": "minimum_charge",
         "value": 29.42,
-        "period": "monthly"
+        "period": "monthly",
+        "note": "Applies under Special Provision O"
+      },
+      {
+        "step_name": "Customer Charge - Optional Time of Use Increment",
+        "charge_type": "fixed_fee",
+        "value": 4.42,
+        "period": "monthly",
+        "note": "Applies if customer elects Special Provision O (Time of Use Rate)"
       }
     ],
     "metadata": {
       "effective_date": "09/01/2025",
-      "version_id": 29
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -97,7 +90,8 @@
         "step_name": "Customer Charge - Special Provision P",
         "charge_type": "fixed_fee",
         "value": 90.1,
-        "period": "monthly"
+        "period": "monthly",
+        "note": "Applies under Special Provision P"
       },
       {
         "step_name": "Demand Charge",
@@ -107,20 +101,21 @@
       },
       {
         "step_name": "Monthly Minimum Charge",
-        "charge_type": "minimum_fee",
+        "charge_type": "minimum_charge",
         "value": 81.99,
         "period": "monthly"
       },
       {
         "step_name": "Monthly Minimum Charge - Special Provision P",
-        "charge_type": "minimum_fee",
+        "charge_type": "minimum_charge",
         "value": 107.09,
-        "period": "monthly"
+        "period": "monthly",
+        "note": "Applies under Special Provision P"
       }
     ],
     "metadata": {
       "effective_date": "09/01/2025",
-      "version_id": 29
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -141,7 +136,7 @@
       },
       {
         "step_name": "Contract Customer Demand Charge",
-        "charge_type": "demand_fee",
+        "charge_type": "demand_charge",
         "value": 28.81,
         "unit": "per kW",
         "period": "monthly",
@@ -149,7 +144,7 @@
       },
       {
         "step_name": "As Used Daily Energy Charge",
-        "charge_type": "energy_fee",
+        "charge_type": "energy_charge",
         "value": 0.2448,
         "unit": "per kWh",
         "period": "daily",
@@ -158,7 +153,7 @@
     ],
     "metadata": {
       "effective_date": "09/01/2025",
-      "version_id": 29
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -169,10 +164,10 @@
         "step_name": "Customer Charge",
         "charge_type": "fixed_fee",
         "value": {
-          "0-2.2 kV": 800.1,
-          "2.2-15 kV": 875.1,
-          "22-50 kV": 1455.1,
-          "Over 60 kV": 1455.1
+          "0-2.2 kV": 775.0,
+          "2.2-15 kV": 850.0,
+          "22-50 kV": 1430.0,
+          "Over 60 kV": 1430.0
         },
         "period": "monthly"
       },
@@ -186,10 +181,10 @@
           "Over 60 kV": 162.8
         },
         "period": "monthly",
-        "demand_kw_applied_to": "minimum 40 kW or less"
+        "demand_kw": "min(40, user.billed_demand)"
       },
       {
-        "step_name": "Demand Charge - Additional Demand (per kW over 40 kW)",
+        "step_name": "Demand Charge - Additional Demand (over 40 kW)",
         "charge_type": "demand_fee",
         "value": {
           "0-2.2 kV": 14.28,
@@ -198,20 +193,19 @@
           "Over 60 kV": 4.07
         },
         "period": "monthly",
-        "demand_kw_applied_to": "all kW over 40"
+        "demand_kw": "max(0, user.billed_demand - 40)"
       },
       {
         "step_name": "Reactive Demand Charge",
         "charge_type": "reactive_demand_fee",
         "value": 0.85,
-        "unit": "per RkVA",
         "period": "monthly",
-        "condition": "applies when reactive demand is determined per tariff conditions"
+        "demand_rkva": "user.billed_rkva"
       }
     ],
     "metadata": {
       "effective_date": "01/01/2012",
-      "version_id": 30
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -219,68 +213,71 @@
     "description": "Large General Service - Time of Use Rate",
     "logic_steps": [
       {
-        "step_name": "Customer Charge - Up to 2.2 kV",
+        "step_name": "Customer Charge",
         "charge_type": "fixed_fee",
         "value": 3525.0,
-        "period": "monthly"
+        "period": "monthly",
+        "condition": "delivery_voltage <= 15 kV"
       },
       {
-        "step_name": "Customer Charge - 2.2-15 kV",
-        "charge_type": "fixed_fee",
-        "value": 3525.0,
-        "period": "monthly"
-      },
-      {
-        "step_name": "Customer Charge - 22-50 kV",
+        "step_name": "Customer Charge",
         "charge_type": "fixed_fee",
         "value": 4350.0,
-        "period": "monthly"
+        "period": "monthly",
+        "condition": "22 kV <= delivery_voltage <= 50 kV"
       },
       {
-        "step_name": "Customer Charge - Over 60 kV",
+        "step_name": "Customer Charge",
         "charge_type": "fixed_fee",
         "value": 8800.0,
-        "period": "monthly"
+        "period": "monthly",
+        "condition": "delivery_voltage > 60 kV"
       },
       {
-        "step_name": "Demand Charge - Up to 2.2 kV",
-        "charge_type": "demand_fee",
+        "step_name": "Demand Charge",
+        "charge_type": "per_kw",
         "value": 14.07,
-        "unit": "per kW",
-        "applies_to": "user.billed_demand"
+        "period": "monthly",
+        "condition": "delivery_voltage <= 15 kV",
+        "formula": "user.billed_demand"
       },
       {
-        "step_name": "Demand Charge - 2.2-15 kV",
-        "charge_type": "demand_fee",
-        "value": 14.07,
-        "unit": "per kW",
-        "applies_to": "user.billed_demand"
-      },
-      {
-        "step_name": "Demand Charge - 22-50 kV",
-        "charge_type": "demand_fee",
+        "step_name": "Demand Charge",
+        "charge_type": "per_kw",
         "value": 4.97,
-        "unit": "per kW",
-        "applies_to": "user.billed_demand"
+        "period": "monthly",
+        "condition": "22 kV <= delivery_voltage <= 50 kV",
+        "formula": "user.billed_demand"
       },
       {
-        "step_name": "Demand Charge - Over 60 kV",
-        "charge_type": "demand_fee",
+        "step_name": "Demand Charge",
+        "charge_type": "per_kw",
         "value": 4.36,
-        "unit": "per kW",
-        "applies_to": "user.billed_demand"
+        "period": "monthly",
+        "condition": "delivery_voltage > 60 kV",
+        "formula": "user.billed_demand"
       },
       {
-        "step_name": "Reactive Demand Charge - All Delivery Voltages",
-        "charge_type": "reactive_demand_fee",
+        "step_name": "Reactive Demand Charge",
+        "charge_type": "per_rkva",
         "value": 1.02,
-        "unit": "per kVAr",
-        "applies_to": "user.billed_rkva"
+        "period": "monthly",
+        "formula": "user.billed_rkva"
       }
+    ],
+    "notes": [
+      "Maximum demand is the highest 15-minute demand interval during the billing period, subject to minimums based on prior months or contracted demand.",
+      "Reactive demand is the highest average lagging reactive kVA demand over 15 minutes minus one-third of the highest kW demand.",
+      "Billing period is monthly, prorated if days_used < 25 or > 35, based on days_used / 30.",
+      "Rates are subject to various surcharges and adjustments as per referenced Rules.",
+      "Customer charge varies by delivery voltage: up to 15 kV, 22-50 kV, and over 60 kV.",
+      "Demand charges vary similarly by delivery voltage.",
+      "Reactive demand charge applies to all delivery voltages.",
+      "Company supplied Electricity Supply Service Charges are separate and hourly based per Rule 46.1."
     ],
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -289,7 +286,7 @@
     "note": "This service classification is canceled and contains no active rate logic.",
     "metadata": {
       "effective_date": "04/01/2013",
-      "version_id": 32
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -309,10 +306,9 @@
         "unit": "user.billed_kwh"
       }
     ],
-    "notes": "Monthly minimum charge is $19.00. Company supplied electricity supply service charges are separate and set according to Rule 46.1.",
     "metadata": {
       "effective_date": "09/01/2025",
-      "version_id": 29
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -324,40 +320,39 @@
         "charge_type": "fixed_fee",
         "value": 4.42,
         "period": "monthly",
-        "conditions": "Applies only to customers electing this TOU option; waived for customers with verified plug-in electric vehicle (PEV) or participating in Clifton Park Demand Reduction REV Demonstration Project."
+        "notes": "Waived for customers with verified PEV or participating in Clifton Park Demand Reduction REV Demonstration Project"
       },
       {
         "step_name": "Energy Charge - Super Peak/On Peak",
         "charge_type": "per_kwh",
         "value": 0.11494,
         "unit": "user.billed_kwh",
-        "conditions": "Applies during Super Peak (Jun-Jul-Aug 2pm-6pm weekdays) and On Peak (7am-11pm all year round) periods"
+        "condition": "user.bill_date.month in [6,7,8] and time_of_use in ['Super Peak', 'On Peak']"
       },
       {
         "step_name": "Energy Charge - Off Peak",
         "charge_type": "per_kwh",
         "value": 0.0097,
         "unit": "user.billed_kwh",
-        "conditions": "Applies during Off Peak (11pm-7am all year round) period"
+        "condition": "time_of_use == 'Off Peak'"
       }
     ],
-    "notes": "Customers must install necessary metering equipment. Standard Tariff Charges also apply in addition to these TOU charges.",
     "metadata": {
       "effective_date": "09/01/2025",
-      "version_id": 29
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
-    "sc_code": "SC1-B",
+    "sc_code": "SC1B",
     "description": "Residential and Farm Service - Optional Large Time of Use Rate",
     "note": "This service classification is canceled. No active rate logic available.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
-    "sc_code": "1-C",
+    "sc_code": "SC1C",
     "description": "Residential and Farm Service - Optional Large Time of Use Rate",
     "logic_steps": [
       {
@@ -370,20 +365,13 @@
         "step_name": "Energy Charge",
         "charge_type": "per_kwh",
         "value": 0.03649,
-        "unit_of_measure": "user.billed_kwh"
+        "unit": "user.billed_kwh"
       }
     ],
-    "notes": [
-      "Energy Supply Service (ESS) charges are separate and based on market price per Rule 46.1 and are not included here.",
-      "Rate periods and time-of-use definitions apply for ESS charges but are not explicitly priced in this tariff.",
-      "Monthly minimum charge is $30.62.",
-      "Adjustments and surcharges per various Rules (32.2, 40.1.8, 40.3, 41, 42, 43, 45, 46, 49, 50, 52, 56, 57, 59, 64, 67, 68, 69, 73) may apply but are outside this base tariff logic.",
-      "No demand or reactive charges are specified for this classification.",
-      "Special provisions apply for eligibility, net metering, budget billing, and energy affordability program credits."
-    ],
+    "notes": "Electricity Supply Service (ESS) charges are additional and set according to market price per Rule 46.1, not included here.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -392,25 +380,25 @@
     "note": "This service classification is canceled. No active rate logic available.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
     "sc_code": "SC3B",
     "description": "Interruptible Electric Service",
-    "note": "Service Classification SC3B is canceled. No active tariff logic to extract.",
+    "note": "Service Classification SC3B is canceled. No active tariff logic available.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
     "sc_code": "SC3C",
     "description": "Combined Firm and Interruptible Electric Service",
-    "note": "Service Classification SC3C is canceled and no active tariff logic is provided.",
+    "note": "Service Classification SC3C is canceled and has no active tariff logic.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -422,51 +410,43 @@
         "note": "Rates applicable for Niagara Power Delivery Service, HLF Delivery Service, Preservation Power Delivery Service, and SC-4 Supplemental Service are for a calendar month billing period."
       },
       {
-        "step_name": "Demand Charge - SC-4 Supplemental Service",
-        "charge_type": "demand_charge",
-        "calculation": "Demand billed is the greater of: (1) the amount by which the overall max 30-minute integrated demand exceeds the sum of demands for Niagara Power Delivery Service (loss adjusted), Preservation Power Delivery Service (loss adjusted), HLF Delivery Service (meter determined), and EDP/PFJ Power; (2) contracted SC-4 Supplemental Service demand; or (3) minimum demand provisions of Parent Service Classification.",
-        "variables_used": [
-          "user.billed_demand"
-        ]
+        "step_name": "Demand Charge Determination",
+        "note": "The billed demand for SC-4 Supplemental Service is the greater of: (1) the amount by which the overall maximum 30-minute integrated demand exceeds the sum of demands for Niagara Power Delivery Service, Preservation Power Delivery Service, HLF Delivery Service, and EDP/PFJ Power; (2) the contracted SC-4 Supplemental Service demand; or (3) the minimum demand provisions of the Parent Service Classification."
       },
       {
-        "step_name": "Energy Charge - SC-4 Supplemental Service",
-        "charge_type": "energy_charge",
-        "calculation": "Billed kWh is the amount by which total kWh at delivery voltage exceeds the sum of kWh received from Niagara Power Delivery Service, Preservation Power Delivery Service, HLF Delivery Service, and EDP/PFJR Service under Rule 34, per 30-minute interval.",
-        "variables_used": [
-          "user.billed_kwh"
-        ]
+        "step_name": "Energy Charge Determination",
+        "note": "The billed kWh for SC-4 Supplemental Service in each 30-minute interval is the amount by which total kWh at delivery voltage exceeds the sum of kWh from Niagara Power Delivery Service, Preservation Power Delivery Service, HLF Delivery Service, and EDP/PFJR Service, but not exceeding the actual total metered kWh."
       },
       {
-        "step_name": "Reactive Demand Charge",
-        "charge_type": "reactive_demand_charge",
-        "calculation": "Reactive Demand is the highest average RkVA of lagging reactive demand over a 30-minute interval during the month less one-third of the highest kW demand measured during the month.",
-        "variables_used": [
-          "user.billed_rkva",
-          "user.billed_demand"
-        ]
+        "step_name": "Reactive Demand",
+        "note": "Reactive Demand is the highest average RkVA of lagging reactive demand over a 30-minute interval during the month less one-third of the highest kW demand measured during the month."
       },
       {
         "step_name": "Parent Service Classification",
-        "note": "SC-4 Supplemental Service customers are assigned a Parent Service Classification (SC-3A before or after Sept 1, 1998, or SC-3) which determines applicable rates, terms, and conditions except for EJP qualifying load under SC-4 special provisions."
+        "note": "SC-4 Supplemental Service customers are assigned a Parent Service Classification (SC-3A before or after Sept 1, 1998, or SC-3) which governs rates, terms, and conditions except for special provisions of SC-4."
       },
       {
         "step_name": "Loss Adjustments",
         "note": "Billed demands and energies for Niagara Power Delivery Service, Preservation Power Delivery Service, HLF Delivery Service, and Replacement Power Rate 2 are adjusted for losses between customer meter and respective switchyards as specified in Rule 39.18."
+      },
+      {
+        "step_name": "Customer Charge",
+        "note": "Customer charge and specific rate charges are governed by the applicable Parent Service Classification assigned to the customer."
       }
     ],
+    "reference": "SC4 rates depend on the Parent Service Classification (SC-3A or SC-3) assigned to the customer for supplemental service. The actual rate charges (customer, energy, demand) are those of the Parent Service Classification.",
     "metadata": {
       "effective_date": "02/01/2021",
-      "version_id": 33
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
     "sc_code": "SC5",
     "description": "Combined 25 and 60 Hertz Service",
-    "note": "Service Classification No. 5 is canceled. No active tariff logic to extract.",
+    "note": "Service Classification No. 5 is canceled. No active tariff logic available.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
@@ -476,19 +456,17 @@
       {
         "step_name": "Energy Payment",
         "charge_type": "energy_rate",
-        "formula": "sum_over_hours(Real_Time_LBMP_i * Q_i) - Incurred_Cost",
-        "units": "per kWh",
-        "notes": "Real Time LBMP in $/MWh for each generator bus; if unavailable, nearest bus or Load Zone price used; Q_i is energy delivered in kWh per hour; Incurred Cost includes NYISO penalties."
+        "formula": "sum_over_hours(Real_Time_LBMP_i * user.billed_kwh_hour_i) - Incurred_Cost",
+        "notes": "Real Time LBMP in $/MWh for each generator bus or nearest electrical generator bus or Load Zone Real Time LBMP if bus price unavailable. Incurred Cost includes NYISO penalties."
       },
       {
         "step_name": "Capacity Payment",
         "charge_type": "demand_rate",
-        "formula": "LBMCP * Capacity",
-        "units": "per kW",
-        "notes": "Capacity is Unforced Capacity recognized by NYISO for the month, capped at 5000 kW for contracts on or after July 1, 2019; LBMCP defined in Rule 1.64."
+        "formula": "LBMCP * Capacity_kW",
+        "notes": "Capacity is Unforced Capacity recognized by NYISO for the month, capped at 5000 kW for contracts executed on or after July 1, 2019."
       },
       {
-        "step_name": "Minimum Unit Rate Guarantee",
+        "step_name": "Minimum Rate Guarantee",
         "charge_type": "energy_rate_minimum",
         "value": 0.06,
         "units": "per kWh",
@@ -496,45 +474,57 @@
       },
       {
         "step_name": "Non-time Differentiated Energy Payment Option",
-        "charge_type": "energy_rate_flat",
-        "notes": "For qualifying small random suppliers electing non-time differentiated basis; deliveries measured by standard kWh meter; customer pays installed cost of metering equipment instead of other charges."
+        "charge_type": "energy_rate",
+        "formula": "average_LBMP * user.billed_kwh",
+        "notes": "For qualifying small random suppliers without interval metering; customer pays installed cost of metering equipment instead of other charges."
       },
       {
         "step_name": "Customer Charge and Buyback Contract Demand Charge",
         "charge_type": "reference",
-        "reference": "Customer Charge and Buyback Contract Demand Charge are based on customer's otherwise applicable service classification for delivery service; if service under both SC-6 and another classification, SC-6 Customer Charge waived and Demand Charge applies only to demand in excess of other classification."
+        "reference": "Customer Charge and Demand Charge are based on customer's otherwise applicable service classification for delivery service. If service is taken under both SC6 and another classification through same connection, Customer Charge waived under SC6 and Demand Charge applies only to demand in excess of that billed under other classification.",
+        "notes": "Charges vary by underlying service classification (e.g., SC1, SC2ND, SC2D, SC3 Secondary, etc.) as per table."
+      },
+      {
+        "step_name": "Buyback Contract Demand Determination",
+        "charge_type": "demand_determination",
+        "notes": "Buyback Contract Demand is customer's contract demand or higher maximum demand recorded, subject to restrictions on reductions and penalties for exceeding contract demand."
+      },
+      {
+        "step_name": "Ancillary Services Payment",
+        "charge_type": "reference",
+        "reference": "Customer receives direct payment from NYISO for Reactive Supply, Regulation, Operating Reserve, and Black Start services subject to NYISO requirements and contracts."
       }
     ],
     "metadata": {
       "effective_date": "09/01/2025",
-      "version_id": 29
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
     "sc_code": "SC8",
     "description": "Large General Service-Hourly Integrated Pricing Program",
-    "note": "Service Classification No. 8 is canceled. No active tariff logic available.",
+    "note": "Service Classification SC8 is canceled. No active tariff logic available.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
     "sc_code": "SC9",
     "description": "Large General Service-Supplemental Hourly Integrated Pricing Program",
-    "note": "This service classification is canceled. No active rate logic available.",
+    "note": "This service classification is canceled. No active tariff logic provided.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   },
   {
     "sc_code": "SC10",
     "description": "On-Site Generation Bypass Deferral Service",
-    "note": "Service Classification No. 10 is canceled. No active tariff logic to extract.",
+    "note": "Service Classification SC10 is canceled. No active tariff logic available.",
     "metadata": {
       "effective_date": "04/27/2009",
-      "version_id": 31
+      "filename": "NationalGrid_Tariff-NewYork.pdf"
     }
   }
 ]

@@ -84,14 +84,14 @@ st.sidebar.title("Troy & Banks – Utility Billing AI")
 # -----------------------------------------------------
 # NAVIGATION WITH ICONS
 # -----------------------------------------------------
-# Icon mapping for each page
+# Icon mapping for each page (Option B — Action-Oriented)
 page_icons = {
-    "Upload Files": "📁",
-    "User Bills": "📄",
-    "Tariff Details": "📑",
-    "Run Workflow": "▶️",
-    "Pipeline Monitor": "📊",
-    "Reports": "📋"
+    "Upload & Ingest": "📁",
+    "Audit Bills": "📄",
+    "Manage Tariffs": "📑",
+    "Execute Pipeline": "▶️",
+    "Pipeline Status": "📊",
+    "Generate Reports": "📋"
 }
 
 # Add custom HTML for tooltip support
@@ -99,11 +99,11 @@ st.sidebar.markdown("""
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const labels = {
-        '📁': 'Upload Files',
-        '📄': 'User Bills',
-        '▶️': 'Run Workflow',
-        '📊': 'Pipeline Monitor',
-        '📋': 'Reports'
+        '📁': 'Upload & Ingest',
+        '📄': 'Audit Bills',
+        '▶️': 'Execute Pipeline',
+        '📊': 'Pipeline Status',
+        '📋': 'Generate Reports'
     };
     
     setTimeout(() => {
@@ -133,27 +133,27 @@ page = st.sidebar.radio(
 # -----------------------------------------------------
 # ROUTING
 # -----------------------------------------------------
-if page == "Upload Files":
+if page == "Upload & Ingest":
     from app.components.file_uploader import render_file_uploader
     render_file_uploader()
 
-elif page == "User Bills":
+elif page == "Audit Bills":
     from app.components.user_bills_viewer import render_user_bills_viewer
     render_user_bills_viewer()
 
-elif page == "Tariff Details":
+elif page == "Manage Tariffs":
     from app.components.tariff_details_viewer import render_tariff_details_viewer
     render_tariff_details_viewer()
 
-elif page == "Run Workflow":
+elif page == "Execute Pipeline":
     from app.components.workflow_runner import render_workflow_runner
     render_workflow_runner()
 
-elif page == "Pipeline Monitor":
+elif page == "Pipeline Status":
     from app.components.pipeline_monitor import render_pipeline_monitor
     render_pipeline_monitor()
 
-elif page == "Reports":
+elif page == "Generate Reports":
     from app.components.reports_viewer import render_reports_viewer
     render_reports_viewer()
 

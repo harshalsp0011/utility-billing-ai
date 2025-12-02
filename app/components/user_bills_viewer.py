@@ -3,6 +3,7 @@ import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
 
 # Import your DB utils
+# (Ensure these paths match your project structure)
 from src.database.db_utils import (
     fetch_all_account_numbers,
     fetch_user_bills,
@@ -14,107 +15,140 @@ from src.database.db_utils import (
 # ---------------------------------------------------------
 @st.dialog("⚠️ Anomaly Details")
 def show_anomaly_popup(bill_id, bill_data, issues_data):
-    """Modal popup showing full bill details plus all related issues (wide layout)."""
+    """
+    Modal popup showing full bill details plus all related issues.
+    Updates:
+    1. WIDTH: Adjusted to 85vw with a max-width of 1200px (not full screen).
+    2. JSON FIX: Compact HTML strings preventing raw code display.
+    3. LAYOUT: Customer Name at top to prevent truncation.
+    """
 
-    # Inject CSS to widen dialog and format sections
+    # ---------------------------------------------------------
+    # 1. EXTRACT CRITICAL INFO
+    # ---------------------------------------------------------
+    customer_name = str(bill_data.get("Customer", "N/A"))
+    account_num = str(bill_data.get("Bill Account", "N/A"))
+    
+    # Remove them from the generic data dictionary
+    excluded_keys = {"Customer", "Bill Account", "_has_issue", "id", "Bill ID"}
+    grid_data = {k: v for k, v in bill_data.items() if k not in excluded_keys}
+
+    # ---------------------------------------------------------
+    # 2. CSS STYLING (UPDATED WIDTH)
+    # ---------------------------------------------------------
     st.markdown(
         """
         <style>
-        /* Widen the Streamlit dialog */
-        div[role="dialog"] {width:95vw !important; max-width:1400px !important;}
-        div[role="dialog"] .stDialog {width:95vw !important;}
-        /* Compact responsive metric grid */
-        .metrics-grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px 18px; margin:8px 0 18px;}
-        .metric-item {background:#fafafa; border:1px solid #eee; border-radius:6px; padding:8px 10px;}
-        .metric-item .m-label {font-size:11px; letter-spacing:.5px; text-transform:uppercase; color:#555; margin-bottom:4px;}
-        .metric-item .m-value {font-size:15px; font-weight:600; color:#111;}
-        /* Raw record grid */
-        .raw-grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:6px 20px; margin-top:4px;}
-        .raw-item {padding:2px 4px; background:transparent;}
-        .raw-item .r-key {font-weight:600; color:#333; margin-right:4px; white-space:nowrap;}
-        .raw-item .r-val {color:#111;}
-        /* Issues */
-        .issue-card {border:1px solid #ffdddd; padding:0.55rem 0.85rem; border-radius:6px; background:rgba(255,0,0,0.05); margin-bottom:0.55rem; font-size:0.82rem;}
-        .issues-scroll {max-height:360px; overflow-y:auto; padding-right:4px;}
-        .issues-scroll::-webkit-scrollbar {width:8px;}
-        .issues-scroll::-webkit-scrollbar-track {background:transparent;}
-        .issues-scroll::-webkit-scrollbar-thumb {background:#bbb; border-radius:4px;}
-        .section-title {margin:0.25rem 0 0.55rem 0;}
+        /* 1. ADJUST POPUP WIDTH */
+        div[role="dialog"] {
+            /* 85% of screen width, but stop growing at 1200px */
+            width: 85vw !important;
+            max-width: 1200px !important;
+        }
+        
+        /* 2. GRID LAYOUT */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .detail-item {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+        .detail-key {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .detail-val {
+            display: block;
+            font-size: 0.9rem;
+            color: #111;
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+        .issue-card {
+            border: 1px solid #ffdddd; 
+            padding: 10px; 
+            border-radius: 6px; 
+            background: rgba(255,0,0,0.05); 
+            margin-bottom: 8px;
+        }
         </style>
-        """,
-        unsafe_allow_html=True,
+        """, 
+        unsafe_allow_html=True
     )
 
-    st.markdown(f"### 🧾 Bill Details (ID: `{bill_id}`)")
+    # ---------------------------------------------------------
+    # 3. TOP HEADER
+    # ---------------------------------------------------------
+    st.markdown("### 🧾 Bill Summary")
+    
+    col1, col2 = st.columns([3, 1]) 
+    with col1:
+        st.caption("Customer Name")
+        st.markdown(f"## 🏢 {customer_name}") 
+    with col2:
+        st.caption("Account Number")
+        st.markdown(f"**{account_num}**")
 
-    # --- Bill Summary Metrics (CSS grid for compact multi-column) ---
-    summary_pairs = [
-        ("Bill Date", bill_data.get("Bill Date")),
-        ("Read Date", bill_data.get("Read Date")),
-        ("Days Used", bill_data.get("Days Used")),
-        ("Billed kWh", bill_data.get("Billed kWh")),
-        ("Billed Demand", bill_data.get("Billed Demand")),
-        ("Load Factor", bill_data.get("Load Factor")),
-        ("Bill Amount", bill_data.get("Bill Amount")),
-        ("Sales Tax Amount", bill_data.get("Sales Tax Amount")),
-        ("Bill Amount (With Tax)", bill_data.get("Bill Amount (With Tax)")),
-        ("Retracted Amount", bill_data.get("Retracted Amount")),
-        ("Sales Tax Factor", bill_data.get("Sales Tax Factor")),
-    ]
-    metrics_html = ["<div class='metrics-grid'>"]
-    for label, value in summary_pairs:
-        val_display = value if value not in (None, "") else "-"
-        if isinstance(val_display, str) and "T" in val_display:
-            val_display = val_display.split("T")[0]
-        metrics_html.append(f"<div class='metric-item'><div class='m-label'>{label}</div><div class='m-value'>{val_display}</div></div>")
-    metrics_html.append("</div>")
-    st.markdown("".join(metrics_html), unsafe_allow_html=True)
+    st.divider()
 
-    st.markdown("---")
+    # ---------------------------------------------------------
+    # 4. DETAILS GRID (Compact HTML Generation)
+    # ---------------------------------------------------------
+    st.markdown("#### 🔍 Record Details")
 
-    # --- Raw Bill Record Key/Value (grid, compact) ---
-    st.markdown("<h4 class='section-title'>🔍 Raw Bill Record</h4>", unsafe_allow_html=True)
-    excluded = {"_has_issue"}
-    detail_dict = {k: v for k, v in bill_data.items() if k not in excluded}
-    # Prioritize frequently referenced keys first
-    priority = [
-        "Bill Account","Customer","Bill ID","Bill Date","Read Date","Uploaded At",
-        "Bill Amount","Bill Amount (With Tax)","Billed kWh","Billed Demand","Days Used",
-        "Load Factor","Sales Tax Amount","Sales Tax Factor","Retracted Amount","Billed rKVA"
-    ]
-    ordered_keys = [k for k in priority if k in detail_dict] + [k for k in detail_dict if k not in priority]
-    kv_html = ["<div class='raw-grid'>"]
-    for k in ordered_keys:
-        v = detail_dict.get(k)
-        val_display = v if v not in (None, "") else "-"
-        if isinstance(val_display, str) and "T" in val_display:
-            val_display = val_display.split("T")[0]
-        kv_html.append(f"<div class='raw-item'><span class='r-key'>{k}:</span><span class='r-val'>{val_display}</span></div>")
-    kv_html.append("</div>")
-    st.markdown("".join(kv_html), unsafe_allow_html=True)
+    # Use compact HTML strings (no indentation inside f-strings) 
+    # to ensure Streamlit renders them as HTML, not code.
+    html_parts = []
+    html_parts.append("<div class='details-grid'>")
+    
+    for k, v in grid_data.items():
+        val_display = str(v) if v not in (None, "") else "-"
+        
+        # Clean up 'T' in dates
+        if "T" in val_display and len(val_display) > 10 and any(c.isdigit() for c in val_display):
+             try: val_display = val_display.split("T")[0]
+             except: pass
+        
+        # Single line f-string to prevent indentation errors
+        item_html = f"<div class='detail-item'><span class='detail-key'>{k}</span><span class='detail-val'>{val_display}</span></div>"
+        html_parts.append(item_html)
+    
+    html_parts.append("</div>")
+    
+    # Render final string
+    st.markdown("".join(html_parts), unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.divider()
 
-    # --- Issues Section ---
-    st.markdown("<h4 class='section-title'>⚠️ Detected Issues</h4>", unsafe_allow_html=True)
+    # ---------------------------------------------------------
+    # 5. ISSUES LIST
+    # ---------------------------------------------------------
+    st.markdown("#### ⚠️ Detected Issues")
     if issues_data.empty:
-        st.success("No issue rows found for this bill in validation log.")
+        st.success("No issues found.")
     else:
-        st.markdown('<div class="issues-scroll">', unsafe_allow_html=True)
-        for _, row in issues_data.iterrows():
-            issue_type = row.get('issue_type','Unknown Issue')
-            description = row.get('description','(No description)')
-            status = row.get('status','N/A')
-            detected = row.get('detected_on','N/A')
-            st.markdown(
-                f"<div class='issue-card'><strong>{issue_type}</strong><br/><em>{description}</em><br/><small>Status: {status} | Detected: {detected}</small></div>",
-                unsafe_allow_html=True,
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
-
+        with st.container(height=350):
+            for _, row in issues_data.iterrows():
+                issue_type = row.get('issue_type','Unknown')
+                description = row.get('description','No description')
+                status = row.get('status','N/A')
+                st.markdown(
+                    f"<div class='issue-card'><strong>{issue_type}</strong><br/>{description}<br/><small>Status: {status}</small></div>",
+                    unsafe_allow_html=True,
+                )
 
 # ---------------------------------------------------------
-# Column mappings (Kept exactly as your original code)
+# Column mappings
 # ---------------------------------------------------------
 BILL_COLUMN_RENAMES = {
     "id": "Bill ID",
@@ -136,7 +170,6 @@ BILL_COLUMN_RENAMES = {
 }
 
 ISSUE_COLUMN_RENAMES = {
-
     "bill_id": "Bill ID",
     "fk_user_bill_id": "Bill ID (FK)",
     "issue_id": "Issue ID",
@@ -144,22 +177,8 @@ ISSUE_COLUMN_RENAMES = {
     "description": "Description",
     "status": "Status",
     "detected_on": "Detected On",
-
     "bill_account": "Bill Account",
     "customer": "Customer",
-    "bill_date": "Bill Date",
-    "read_date": "Read Date",
-    "days_used": "Days Used",
-    "billed_kwh": "Billed kWh",
-    "billed_demand": "Billed Demand",
-    "load_factor": "Load Factor",
-    "billed_rkva": "Billed rKVA",
-    "bill_amount": "Bill Amount",
-    "sales_tax_amt": "Sales Tax Amount",
-    "bill_amount_with_sales_tax": "Bill Amount (With Tax)",
-    "retracted_amt": "Retracted Amount",
-    "sales_tax_factor": "Sales Tax Factor",
-    "bill_created_at": "Uploaded At",
 }
 
 # ---------------------------------------------------------
@@ -226,16 +245,15 @@ def render_user_bills_viewer():
         }
     )
 
-    # 2. Configure Selection (New Addition)
+    # 2. Configure Selection
     gb.configure_selection(
-        selection_mode="single",  # Only allow one row to be selected
-        use_checkbox=False,       # Select by clicking the row directly
-        pre_selected_rows=[]      # Start with nothing selected
+        selection_mode="single",
+        use_checkbox=False,
+        pre_selected_rows=[]
     )
     
     grid_options = gb.build()
 
-    # CSS for styling (Same as your original)
     custom_css = {
         ".issue-row": {
             "background-color": "rgba(255, 0, 0, 0.10) !important;",
@@ -248,8 +266,6 @@ def render_user_bills_viewer():
         }
     }
 
-    # 3. Render Grid with Update Mode
-    # We must use SELECTION_CHANGED so Streamlit reruns the script when a user clicks a row
     grid_response = AgGrid(
         display_df,
         gridOptions=grid_options,
@@ -258,7 +274,7 @@ def render_user_bills_viewer():
         fit_columns_on_grid_load=True,
         theme="streamlit",
         height=550,
-        update_mode=GridUpdateMode.SELECTION_CHANGED, # Important!
+        update_mode=GridUpdateMode.SELECTION_CHANGED, 
         data_return_mode=DataReturnMode.FILTERED_AND_SORTED
     )
 
@@ -267,7 +283,6 @@ def render_user_bills_viewer():
     # ===========================
     selected_rows = grid_response['selected_rows']
     
-    # Normalize selected rows into a single dict (or None)
     selected_row_dict = None
     if isinstance(selected_rows, pd.DataFrame):
         if not selected_rows.empty:
@@ -282,17 +297,35 @@ def render_user_bills_viewer():
         if has_issue == 1 and selected_bill_id is not None:
             try:
                 selected_bill_id_int = int(selected_bill_id)
+                original_rows = bills_df[bills_df['id'] == selected_bill_id_int]
+                
+                if not original_rows.empty:
+                    original_row = original_rows.iloc[0].to_dict()
+                    full_bill_dict = {BILL_COLUMN_RENAMES.get(k, k): v for k, v in original_row.items()}
+                    
+                    if 'customer' in original_row:
+                        full_bill_dict['Customer'] = original_row['customer']
+                        
+                    for date_key in ("Bill Date", "Read Date", "Uploaded At"):
+                        if date_key in full_bill_dict and pd.notna(full_bill_dict[date_key]):
+                            try:
+                                full_bill_dict[date_key] = pd.to_datetime(full_bill_dict[date_key]).strftime('%Y-%m-%d')
+                            except Exception:
+                                pass
+                else:
+                    full_bill_dict = selected_row_dict
+
                 relevant_issues = issues_df[issues_df['bill_id'] == selected_bill_id_int]
-                show_anomaly_popup(selected_bill_id_int, selected_row_dict, relevant_issues)
+                show_anomaly_popup(selected_bill_id_int, full_bill_dict, relevant_issues)
+                
             except Exception as e:
                 st.error(f"Error loading details: {e}")
 
     # ===========================
-    # Issues Table (Bottom View)
+    # Issues Table (Overview)
     # ===========================
-    # (Kept for overview purposes, optional if you only want the popup)
     st.subheader("All Anomalies (Overview)")
     if not issues_df.empty:
         issues_display = issues_df.copy()
-        # ... (Your existing formatting logic)
-        st.dataframe(issues_display, width=1000, height=300)
+        # UPDATED: Replaced use_container_width=True with width="stretch" per warning
+        st.dataframe(issues_display, width="stretch")

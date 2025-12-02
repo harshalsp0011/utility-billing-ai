@@ -8,15 +8,19 @@ from src.agents.document_processor_agent.utility_bill_doc_processor import proce
 
 
 def render_file_uploader():
-    st.title("File Uploads")
+    st.title("📤 File Upload Management")
+
+    # Tab navigation for separate sections
+    tab1, tab2 = st.tabs(["📄 Bill Documents", "⚡ Tariff Documents"])
 
     # -----------------------------
-    # Section 1: Bill Upload
+    # TAB 1: Bill Upload
     # -----------------------------
-    st.subheader("Upload Bill Files")
-    st.caption("Upload monthly or quarterly billing statements (PDF or Excel).")
+    with tab1:
+        st.subheader("Upload Bill Files")
+        st.caption("Upload monthly or quarterly billing statements (PDF or Excel).")
 
-    bill_files = st.file_uploader(
+        bill_files = st.file_uploader(
         "Select billing files",
         type=["pdf", "xlsx", "xls"],
         accept_multiple_files=True,
@@ -60,12 +64,13 @@ def render_file_uploader():
                 st.error(f"❌ Failed to process {file.name}: {e}")
 
     # -----------------------------
-    # Section 2: Tariff Upload
+    # TAB 2: Tariff Upload
     # -----------------------------
-    st.subheader("Update Tariff Rules")
-    st.caption("Upload the latest tariff document for your utility provider.")
+    with tab2:
+        st.subheader("Upload Tariff Documents")
+        st.caption("Upload the latest tariff document for your utility provider (PDF only).")
 
-    tariff_files = st.file_uploader(
+        tariff_files = st.file_uploader(
         "Select tariff files",
         type=["pdf"],
         accept_multiple_files=True,
@@ -90,6 +95,8 @@ def render_file_uploader():
 
             try:
                 insert_raw_bill_document(metadata)
-                st.success(f"Tariff file uploaded and logged: {file.name}")
+                st.success(f"✅ Tariff file uploaded and logged: {file.name}")
             except Exception as e:
-                st.error(f"Error logging tariff file {file.name}: {e}")
+                st.error(f"❌ Error logging tariff file {file.name}: {e}")
+        
+        st.info("💡 Tip: After uploading tariff documents, navigate to the Tariff Analysis section to extract and analyze rate structures.")

@@ -1,22 +1,11 @@
-"""
-file_uploader.py
-----------------
-Handles file uploads for Utility Billing AI Streamlit app.
-
-Sections:
----------
-1. Bill File Upload → Stores in raw_documents
-2. Tariff File Upload → Updates tariff_rules
-
-Each upload:
-    - Saves file to /data/raw
-    - Logs metadata in the database
-"""
-
 import streamlit as st
 from pathlib import Path
 from datetime import datetime
+import pandas as pd
+
 from src.database.db_utils import insert_raw_bill_document
+from src.agents.document_processor_agent.utility_bill_doc_processor import process_bill
+
 
 def render_file_uploader():
     st.title("File Uploads")
@@ -42,6 +31,7 @@ def render_file_uploader():
             file_path = save_dir / file.name
             file_path.write_bytes(file.read())
 
+            # Log upload in DB
             metadata = {
                 "file_name": file.name,
                 "file_type": Path(file.name).suffix.lower(),
@@ -49,11 +39,25 @@ def render_file_uploader():
                 "source": "User Upload (Bill)",
                 "status": "uploaded"
             }
+
             try:
                 insert_raw_bill_document(metadata)
                 st.success(f"Bill file uploaded and logged: {file.name}")
             except Exception as e:
                 st.error(f"Error logging bill file {file.name}: {e}")
+
+            # -------------------------
+            # 🔥 AUTO-PROCESS THE FILE
+            # -------------------------
+            try:
+                st.info(f"Processing: {file.name} ...")
+                df = process_bill(file_path)
+
+                st.success(f"Processed successfully → {len(df)} rows extracted.")
+                st.dataframe(df)
+
+            except Exception as e:
+                st.error(f"❌ Failed to process {file.name}: {e}")
 
     # -----------------------------
     # Section 2: Tariff Upload
@@ -83,6 +87,7 @@ def render_file_uploader():
                 "source": "User Upload (Tariff)",
                 "status": "uploaded"
             }
+
             try:
                 insert_raw_bill_document(metadata)
                 st.success(f"Tariff file uploaded and logged: {file.name}")

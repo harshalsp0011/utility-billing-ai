@@ -9,6 +9,11 @@ from src.agents.document_processor_agent.utility_bill_doc_processor import proce
 
 def render_file_uploader():
     st.title("📁 File Upload Management")
+    # Session flags to manage UI state
+    if "bill_processed" not in st.session_state:
+        st.session_state["bill_processed"] = False
+    if "bill_results" not in st.session_state:
+        st.session_state["bill_results"] = None
 
     # Tab navigation for separate sections
     tab1, tab2 = st.tabs(["📄 Bill Documents", "⚡ Tariff Documents"])
@@ -17,15 +22,18 @@ def render_file_uploader():
     # TAB 1: Bill Upload
     # -----------------------------
     with tab1:
-        st.subheader("Upload Bill Files")
-        st.caption("Upload monthly or quarterly billing statements (PDF only).")
+        st.subheader("Upload Bill Files ")
+        st.caption("Upload your utility bill documents for processing and anomaly detection. (PDF only)")
 
-        bill_file = st.file_uploader(
-            "Select billing file",
-            type=["pdf"],
-            accept_multiple_files=False,
-            key="bill_uploader"
-        )
+        # Show uploader only when not processed yet
+        bill_file = None
+        if not st.session_state["bill_processed"]:
+            bill_file = st.file_uploader(
+                "",
+                type=["pdf"],
+                accept_multiple_files=False,
+                key="bill_uploader"
+            )
 
         if bill_file:
             save_dir = Path("data/raw")
@@ -132,8 +140,56 @@ def render_file_uploader():
                 df_display.index = df_display.index + 1
                 st.dataframe(df_display, width='stretch')
 
+                # Persist results and hide uploader on rerun
+                st.session_state["bill_processed"] = True
+                st.session_state["bill_results"] = {
+                    "file_name": file.name,
+                    "total_anomalies": int(total_anomalies),
+                    "dataframe": df_display
+                }
+                # Clear file_uploader value and rerun to hide the chip
+                if "bill_uploader" in st.session_state:
+                    del st.session_state["bill_uploader"]
+                st.rerun()
+
             except Exception as e:
                 st.error(f"❌ Failed to process {file.name}: {e}")
+
+        # When processed, show results from session without uploader
+        elif st.session_state["bill_processed"] and st.session_state["bill_results"]:
+            res = st.session_state["bill_results"]
+            st.markdown(f"### 📄 {res['file_name']}")
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.metric(label="Anomalies detected", value=res["total_anomalies"])
+            with col2:
+                st.info("💡 Tip: check Audit Bills section to get better insights.")
+            st.dataframe(res["dataframe"], width='stretch')
+            # Optional: button to upload another file
+            # Highlight the "Upload another bill" button with a more prominent color
+            st.markdown(
+                """
+                <style>
+                /* Style only the button in this section */
+                div[data-testid="stButton"] > button {
+                    background-color: #ff9800 !important; /* Amber */
+                    color: white !important;
+                    border: none !important;
+                    box-shadow: 0 2px 6px rgba(255, 152, 0, 0.4) !important;
+                }
+                div[data-testid="stButton"] > button:hover {
+                    background-color: #fb8c00 !important; /* Darker Amber */
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            if st.button("Upload another bill"):
+                st.session_state["bill_processed"] = False
+                st.session_state["bill_results"] = None
+                if "bill_uploader" in st.session_state:
+                    del st.session_state["bill_uploader"]
+                st.rerun()
 
     # -----------------------------
     # TAB 2: Tariff Upload

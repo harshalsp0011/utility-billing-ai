@@ -55,10 +55,15 @@ def render_file_uploader():
             # -------------------------
             try:
                 st.info(f"Processing: {file.name} ...")
-                df = process_bill(file_path)
+                df, total_anomalies = process_bill(file_path)
 
                 st.success(f"Processed successfully → {len(df)} rows extracted.")
-                st.dataframe(df)
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    st.metric(label="Anomalies detected", value=int(total_anomalies))
+                with col2:
+                    st.dataframe(df)
+                st.caption("Tip: check Audit Bills section to get better insights.")
 
             except Exception as e:
                 st.error(f"❌ Failed to process {file.name}: {e}")

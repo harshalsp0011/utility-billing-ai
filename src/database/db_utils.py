@@ -174,6 +174,11 @@ def update_pipeline_run(run_id: int, status: str, error_msg: str = None):
 def insert_user_bill(record: dict):
     """
     Inserts a single UserBills record.
+    
+    Returns
+    -------
+    str or None
+        The bill_account that was inserted, or None if insertion failed.
     """
     logger.info("start of insert_user_bill")
     session = get_session()
@@ -181,14 +186,16 @@ def insert_user_bill(record: dict):
         bill = UserBills(**record)
         session.add(bill)
         session.commit()
-        logger.info(f"📄 Inserted UserBills record for Account {record.get('bill_account')}")
+        bill_account = record.get('bill_account')
+        logger.info(f"📄 Inserted UserBills record for Account {bill_account}")
+        return bill_account
     except SQLAlchemyError as e:
         logger.error(f"❌ Failed to insert UserBills record: {e}")
         session.rollback()
+        return None
     finally:
         logger.info("end of insert_user_bill")
         session.close()
-
 
 def insert_user_bills_bulk(df: pd.DataFrame):
     """

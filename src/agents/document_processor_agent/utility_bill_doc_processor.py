@@ -11,6 +11,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 import sys
 
+from src.agents.billing_anomaly_detector_agent.anomaly_detector_llm_call import validate_account_with_llm
+
 # Ensure project root is on sys.path so `from src...` imports work when running
 # this file directly (python src/agents/document_processor/temp.py)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -321,6 +323,7 @@ def process_bill(pdf_path: Path):
             return None
 
     inserted = 0
+    total_anomalies_overall = 0
     for _, row in df_out.iterrows():
         record = {
             "bill_account": row.get("Bill Account") or None,
@@ -341,13 +344,32 @@ def process_bill(pdf_path: Path):
             "created_at": datetime.utcnow(),
         }
         try:
-            insert_user_bill(record)
+            bill_account = insert_user_bill(record)
+            if bill_account:
+                anomalies = validate_account_with_llm(bill_account)
+                # Derive counts from LLM response
+                summary = anomalies.get("summary", {}) if isinstance(anomalies, dict) else {}
+                bills_with_anomalies = summary.get("bills_with_anomalies", 0)
+                total_bills = summary.get("total_bills", 0)
+                # Count total anomaly items across all bills
+                bill_anomalies = anomalies.get("bill_anomalies", []) if isinstance(anomalies, dict) else []
+                total_anomalies = 0
+                for ba in bill_anomalies:
+                    try:
+                        total_anomalies += len(ba.get("anomalies", []) or [])
+                    except Exception:
+                        pass
+                total_anomalies_overall += total_anomalies
+                logger.info(
+                    f"Validation for account {bill_account}: total_bills={total_bills}, bills_with_anomalies={bills_with_anomalies}, total_anomalies={total_anomalies}"
+                )
+                
             inserted += 1
         except Exception as e:
             logger.error(f"Failed to insert user bill for account {record.get('bill_account')}: {e}")
 
-    logger.info(f"Parsed {len(df_out)} rows -> inserted {inserted} rows into DB (UserBills)")
-    return df_out
+    logger.info(f"Parsed {len(df_out)} rows -> inserted {inserted} rows into DB (UserBills); total anomalies detected={total_anomalies_overall}")
+    return df_out, total_anomalies_overall
 
 # Example usage
 if __name__ == "__main__":

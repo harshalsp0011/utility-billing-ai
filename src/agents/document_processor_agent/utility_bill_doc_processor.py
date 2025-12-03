@@ -324,6 +324,8 @@ def process_bill(pdf_path: Path):
 
     inserted = 0
     total_anomalies_overall = 0
+    validated_accounts = set()  # Track which accounts we've already validated
+    
     for _, row in df_out.iterrows():
         record = {
             "bill_account": row.get("Bill Account") or None,
@@ -346,27 +348,33 @@ def process_bill(pdf_path: Path):
         try:
             bill_account = insert_user_bill(record)
             if bill_account:
-                anomalies = validate_account_with_llm(bill_account)
-                # Derive counts from LLM response
-                summary = anomalies.get("summary", {}) if isinstance(anomalies, dict) else {}
-                bills_with_anomalies = summary.get("bills_with_anomalies", 0)
-                total_bills = summary.get("total_bills", 0)
-                # Count total anomaly items across all bills
-                bill_anomalies = anomalies.get("bill_anomalies", []) if isinstance(anomalies, dict) else []
-                total_anomalies = 0
-                for ba in bill_anomalies:
-                    try:
-                        total_anomalies += len(ba.get("anomalies", []) or [])
-                    except Exception:
-                        pass
-                total_anomalies_overall += total_anomalies
-                logger.info(
-                    f"Validation for account {bill_account}: total_bills={total_bills}, bills_with_anomalies={bills_with_anomalies}, total_anomalies={total_anomalies}"
-                )
-                
+                validated_accounts.add(bill_account)  # Track unique accounts for validation
             inserted += 1
         except Exception as e:
             logger.error(f"Failed to insert user bill for account {record.get('bill_account')}: {e}")
+
+    # Validate each unique account once after all bills are inserted
+    for account in validated_accounts:
+        try:
+            anomalies = validate_account_with_llm(account)
+            # Derive counts from LLM response
+            summary = anomalies.get("summary", {}) if isinstance(anomalies, dict) else {}
+            bills_with_anomalies = summary.get("bills_with_anomalies", 0)
+            total_bills = summary.get("total_bills", 0)
+            # Count total anomaly items across all bills
+            bill_anomalies = anomalies.get("bill_anomalies", []) if isinstance(anomalies, dict) else []
+            total_anomalies = 0
+            for ba in bill_anomalies:
+                try:
+                    total_anomalies += len(ba.get("anomalies", []) or [])
+                except Exception:
+                    pass
+            total_anomalies_overall += total_anomalies
+            logger.info(
+                f"Validation for account {account}: total_bills={total_bills}, bills_with_anomalies={bills_with_anomalies}, total_anomalies={total_anomalies}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to validate account {account}: {e}")
 
     logger.info(f"Parsed {len(df_out)} rows -> inserted {inserted} rows into DB (UserBills); total anomalies detected={total_anomalies_overall}")
     return df_out, total_anomalies_overall

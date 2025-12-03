@@ -191,9 +191,9 @@ def render_file_uploader():
                     del st.session_state["bill_uploader"]
                 st.rerun()
 
-    # -----------------------------
-    # TAB 2: Tariff Upload
-    # -----------------------------
+# -----------------------------
+# TAB 2: Tariff Upload
+# -----------------------------
     with tab2:
         st.subheader("Upload Tariff Documents")
         st.caption("Upload the latest tariff document for your utility provider (PDF only).")
@@ -211,54 +211,75 @@ def render_file_uploader():
 
             for file in tariff_files:
                 try:
-                    # Create a full-page modal overlay
+                   # Create a full-page modal overlay
                     st.markdown("""
-                        <style>
-                        .stApp {
-                            pointer-events: none;
-                        }
-                        div[data-testid="stAppViewContainer"] > section {
-                            filter: blur(5px);
-                        }
-                        section[data-testid="stSidebar"] {
-                            pointer-events: none;
-                            filter: blur(5px);
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
-                    
+                            <style>
+                            .stApp {
+                                pointer-events: none;
+                            }
+                            div[data-testid="stAppViewContainer"] > section {
+                                filter: blur(5px);
+                            }
+                            section[data-testid="stSidebar"] {
+                                pointer-events: none;
+                                filter: blur(5px);
+                            }
+                            </style>
+                        """, unsafe_allow_html=True)
+                        
                     processing_placeholder = st.empty()
-                    
+                        
                     with processing_placeholder.container():
-                        st.markdown("""
-                            <div style='position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                                 background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
-                                 z-index: 9999; display: flex; align-items: center; justify-content: center;
-                                 pointer-events: all;'>
-                                <div style='background: white; padding: 40px; border-radius: 10px; 
-                                     text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'>
-                                    <h2 style='color: #1f77b4; margin-bottom: 20px;'>🔄 Processing Tariff Document</h2>
-                                    <p style='font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px;'>{}</p>
-                                    <p style='color: #666; margin-bottom: 20px;'>Please wait while we upload and process the tariff data...</p>
-                                    <div style='width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden;'>
-                                        <div style='width: 50%; height: 100%; background: linear-gradient(90deg, #1f77b4, #4fc3f7); 
-                                             animation: loading 1.5s ease-in-out infinite;'></div>
+                            st.markdown("""
+                                <div style='position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+                                    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
+                                    z-index: 9999; display: flex; align-items: center; justify-content: center;
+                                    pointer-events: all;'>
+                                    <div style='background: white; padding: 40px; border-radius: 10px; 
+                                        text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'>
+                                        <h2 style='color: #1f77b4; margin-bottom: 20px;'>🔄 Processing Tariff Document</h2>
+                                        <p style='font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px;'>{}</p>
+                                        <p style='color: #666; margin-bottom: 20px;'>Please wait while we upload and process the tariff data...</p>
+                                        <div style='width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden;'>
+                                            <div style='width: 50%; height: 100%; background: linear-gradient(90deg, #1f77b4, #4fc3f7); 
+                                                animation: loading 1.5s ease-in-out infinite;'></div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <style>
-                            @keyframes loading {{
-                                0% {{ transform: translateX(-100%); }}
-                                50% {{ transform: translateX(100%); }}
-                                100% {{ transform: translateX(-100%); }}
-                            }}
-                            </style>
-                        """.format(file.name), unsafe_allow_html=True)
-                    
-                    # Process the file
+                                <style>
+                                @keyframes loading {{
+                                    0% {{ transform: translateX(-100%); }}
+                                    50% {{ transform: translateX(100%); }}
+                                    100% {{ transform: translateX(-100%); }}
+                                }}
+                                </style>
+                            """.format(file.name), unsafe_allow_html=True)
+                        
+                        # Process the file
                     file_path = tariff_dir / file.name
                     file_path.write_bytes(file.read())
 
+                    # ---------------------------------------------------------
+                    # 🔥 CALL THE PIPELINE HERE
+                    # ---------------------------------------------------------
+                    from src.agents.tariff_analysis_agent.pipeline_runner import run_tariff_pipeline
+
+                    try:
+                        results = run_tariff_pipeline(file_path)
+
+                        st.success(f"✔ Processed tariff: {file.name}")
+                        st.json({
+                            "Grouped Tariffs": str(results["grouped_tariffs"]),
+                            "Tariff Definitions": str(results["tariff_definitions"]),
+                            "Final Logic": str(results["final_logic"])
+                        })
+
+                    except Exception as e:
+                        st.error(f"❌ Pipeline failed: {e}")
+                        continue  # go to next file
+                    # ---------------------------------------------------------
+
+                    # Log metadata (optional)
                     metadata = {
                         "file_name": file.name,
                         "file_type": Path(file.name).suffix.lower(),
@@ -266,29 +287,29 @@ def render_file_uploader():
                         "source": "User Upload (Tariff)",
                         "status": "uploaded"
                     }
-
                     insert_raw_bill_document(metadata)
-                    
-                    # Clear the processing overlay and re-enable page
+
+                        
+                        # Clear the processing overlay and re-enable page
                     processing_placeholder.empty()
                     st.markdown("""
-                        <style>
-                        .stApp {
-                            pointer-events: auto;
-                        }
-                        div[data-testid="stAppViewContainer"] > section {
-                            filter: none;
-                        }
-                        section[data-testid="stSidebar"] {
-                            pointer-events: auto;
-                            filter: none;
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
-                    
+                            <style>
+                            .stApp {
+                                pointer-events: auto;
+                            }
+                            div[data-testid="stAppViewContainer"] > section {
+                                filter: none;
+                            }
+                            section[data-testid="stSidebar"] {
+                                pointer-events: auto;
+                                filter: none;
+                            }
+                            </style>
+                        """, unsafe_allow_html=True)
+                        
                     st.success(f"✅ Tariff file uploaded and logged: {file.name}")
-                    
+                        
                 except Exception as e:
                     st.error(f"❌ Error logging tariff file {file.name}: {e}")
-            
-            st.info("💡 Tip: After uploading tariff documents, navigate to the Tariff Analysis section to extract and analyze rate structures.")
+
+            st.info("💡 Tip: Tariff processed successfully. Check Tariff Analysis section.")

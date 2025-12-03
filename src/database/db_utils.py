@@ -315,11 +315,11 @@ def insert_bill_validation_result(record: dict):
         session.add(val)
         session.commit()
         logger.info(
-            f"✅ Bill validation result added "
+            f"[OK] Bill validation result added "
             f"Account={record.get('account_id')} | Issue={record.get('issue_type')}"
         )
     except SQLAlchemyError as e:
-        logger.error(f"❌ Failed to insert bill validation result: {e}")
+        logger.error(f"[ERROR] Failed to insert bill validation result: {e}")
         session.rollback()
     finally:
         logger.info("end of insert_bill_validation_result")

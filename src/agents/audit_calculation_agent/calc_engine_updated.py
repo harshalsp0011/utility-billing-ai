@@ -23,7 +23,7 @@ SAFE_GLOBALS = {
 
 def _safe_eval(expr: str, context: Dict[str, Any], *, desc: str = "") -> Any:
     """
-    Evaluate a small arithmetic expression safely with a limited global namespace.
+    Evaluate a small arithmetic expression safely with a a limited global namespace.
     """
     if not expr:
         return None
@@ -39,8 +39,6 @@ def _parse_voltage_tier_key(key: str) -> Tuple[float, float]:
     Parse keys like:
         '0-2.2 kV', '2.2-15 kV', '22-50 kV', 'Over 60 kV'
     into (low_kv, high_kv) ranges. high_kv may be float('inf').
-
-    Very tailored to the patterns in the provided JSON.
     """
     import re
 
@@ -70,7 +68,12 @@ def _parse_voltage_tier_key(key: str) -> Tuple[float, float]:
     return 0.0, float("inf")
 
 
-def _select_rate_by_voltage(value_obj: Any, delivery_voltage: Optional[float], *, step_name: str) -> float:
+def _select_rate_by_voltage(
+    value_obj: Any,
+    delivery_voltage: Optional[float],
+    *,
+    step_name: str,
+) -> float:
     """
     For SC3 / SC3A style structures where 'value' is a dict keyed by voltage band,
     pick the appropriate rate based on delivery_voltage (in kV).
@@ -86,7 +89,9 @@ def _select_rate_by_voltage(value_obj: Any, delivery_voltage: Optional[float], *
             return 0.0
 
     if delivery_voltage is None:
-        logger.warning(f"delivery_voltage not provided but value is tiered in {step_name}. Returning 0.")
+        logger.warning(
+            f"delivery_voltage not provided but value is tiered in {step_name}. Returning 0."
+        )
         return 0.0
 
     for key, rate in value_obj.items():
@@ -104,11 +109,29 @@ def _select_rate_by_voltage(value_obj: Any, delivery_voltage: Optional[float], *
     return 0.0
 
 
+# ---- service-class normalization ------------------------------------------
+
+
+def _normalize_sc_code(sc: Optional[str]) -> str:
+    """
+    Normalize service class codes so DB values and JSON sc_code align.
+
+    Examples:
+      'SC-1'   -> 'SC1'
+      'sc1 '   -> 'SC1'
+      'SC 2ND' -> 'SC2ND'
+      'SC2-ND' -> 'SC2ND'
+    """
+    if sc is None:
+        return ""
+    return str(sc).upper().replace(" ", "").replace("-", "")
+
+
 class AuditEngine:
     """
     Tariff calculation / audit engine.
 
-    This version understands the richer tariff_definitions.json provided:
+    This version understands the richer tariff_definitions.json:
       - fixed_fee
       - per_kwh / energy_charge
       - per_kw / demand_charge / demand_fee
@@ -134,7 +157,12 @@ class AuditEngine:
             if isinstance(data, dict) and "tariffs" in data:
                 data = data["tariffs"]
 
-            mapping = {item["sc_code"]: item for item in data}
+            mapping: Dict[str, dict] = {}
+            for item in data:
+                raw_sc = item["sc_code"]
+                key = _normalize_sc_code(raw_sc)
+                mapping[key] = item
+
             logger.info(f"Engine loaded logic for: {list(mapping.keys())}")
             return mapping
         except FileNotFoundError:
@@ -152,16 +180,20 @@ class AuditEngine:
         """
         Given a user_bills row, compute expected bill based on tariff logic.
         """
-        sc_code = row.get("service_class", "SC1")
+        raw_sc = row.get("service_class", "SC1")
+        sc_code = _normalize_sc_code(raw_sc)
 
         logic = self.tariff_map.get(sc_code)
         if not logic:
+            reason = f"No logic for {raw_sc} (normalized={sc_code})"
             return {
                 "status": "SKIPPED",
-                "reason": f"No logic for {sc_code}",
+                "reason": reason,
+                "sc_code": sc_code,
                 "expected_amount": 0.0,
+                "expected_bill": 0.0,
                 "variance": 0.0,
-                "trace": [],
+                "trace": [reason],
             }
 
         logic_steps: List[dict] = logic.get("logic_steps") or []
@@ -169,12 +201,15 @@ class AuditEngine:
         # Some SCs are effectively reference-only / canceled and have no rate logic
         if not logic_steps:
             note = logic.get("note") or logic.get("notes") or "No active rate logic."
+            reason = f"{raw_sc}: {note}"
             return {
                 "status": "SKIPPED",
-                "reason": f"{sc_code}: {note}",
+                "reason": reason,
+                "sc_code": sc_code,
                 "expected_amount": 0.0,
+                "expected_bill": 0.0,
                 "variance": 0.0,
-                "trace": [],
+                "trace": [reason],
             }
 
         # Prepare context from user_bills row
@@ -232,7 +267,13 @@ class AuditEngine:
                 continue
 
             # Handle reference-only classifications (SC4, SC6, SC12, etc.)
-            if charge_type in {"reference", "energy_rate", "demand_rate", "energy_rate_minimum", "demand_determination"}:
+            if charge_type in {
+                "reference",
+                "energy_rate",
+                "demand_rate",
+                "energy_rate_minimum",
+                "demand_determination",
+            }:
                 ref_note = step.get("reference") or step.get("note") or "Reference-only step."
                 trace_log.append(f"{step_name}: {ref_note} (no direct charge computed).")
                 continue
@@ -260,53 +301,92 @@ class AuditEngine:
             try:
                 # 1) Fixed monthly fees (may or may not be tiered by voltage)
                 if charge_type == "fixed_fee":
-                    rate = _select_rate_by_voltage(step.get("value", 0.0), delivery_voltage, step_name=step_name)
+                    rate = _select_rate_by_voltage(
+                        step.get("value", 0.0),
+                        delivery_voltage,
+                        step_name=step_name,
+                    )
                     cost = float(rate)
 
                 # 2) kWh-based charges
                 elif charge_type in {"per_kwh", "energy_charge"}:
-                    rate = _select_rate_by_voltage(step.get("value", 0.0), delivery_voltage, step_name=step_name)
-                    quantity_expr = step.get("unit") or step.get("applies_to") or "user.billed_kwh"
+                    rate = _select_rate_by_voltage(
+                        step.get("value", 0.0),
+                        delivery_voltage,
+                        step_name=step_name,
+                    )
+                    quantity_expr = (
+                        step.get("unit") or step.get("applies_to") or "user.billed_kwh"
+                    )
                     # Avoid nonsense like "per kWh" as an expression
                     if "user." not in str(quantity_expr):
                         quantity_expr = "user.billed_kwh"
-                    quantity = _safe_eval(str(quantity_expr), eval_context, desc=f"kWh quantity in {step_name}")
+                    quantity = _safe_eval(
+                        str(quantity_expr),
+                        eval_context,
+                        desc=f"kWh quantity in {step_name}",
+                    )
                     quantity = float(quantity or 0.0)
                     cost = rate * quantity
 
                 # 3) kW demand-based charges
                 elif charge_type in {"per_kw", "demand_charge", "demand_fee"}:
-                    rate = _select_rate_by_voltage(step.get("value", 0.0), delivery_voltage, step_name=step_name)
+                    rate = _select_rate_by_voltage(
+                        step.get("value", 0.0),
+                        delivery_voltage,
+                        step_name=step_name,
+                    )
 
                     # SC3 style: 'demand_kw': "min(40, user.billed_demand)" etc.
                     if "demand_kw" in step:
                         demand_expr = step["demand_kw"]
                     else:
                         # SC2-D / SC3A style: unit or formula
-                        demand_expr = step.get("formula") or step.get("unit") or "user.billed_demand"
+                        demand_expr = (
+                            step.get("formula") or step.get("unit") or "user.billed_demand"
+                        )
 
                     if "user." not in str(demand_expr):
                         demand_expr = "user.billed_demand"
 
-                    demand_kw = _safe_eval(str(demand_expr), eval_context, desc=f"demand_kW in {step_name}")
+                    demand_kw = _safe_eval(
+                        str(demand_expr),
+                        eval_context,
+                        desc=f"demand_kW in {step_name}",
+                    )
                     demand_kw = float(demand_kw or 0.0)
                     cost = rate * demand_kw
 
                 # 4) reactive demand-based charges
                 elif charge_type in {"per_rkva", "reactive_demand_fee"}:
-                    rate = _select_rate_by_voltage(step.get("value", 0.0), delivery_voltage, step_name=step_name)
+                    rate = _select_rate_by_voltage(
+                        step.get("value", 0.0),
+                        delivery_voltage,
+                        step_name=step_name,
+                    )
 
-                    rkva_expr = step.get("demand_rkva") or step.get("formula") or step.get("unit") or "user.billed_rkva"
+                    rkva_expr = (
+                        step.get("demand_rkva")
+                        or step.get("formula")
+                        or step.get("unit")
+                        or "user.billed_rkva"
+                    )
                     if "user." not in str(rkva_expr):
                         rkva_expr = "user.billed_rkva"
 
-                    rkva = _safe_eval(str(rkva_expr), eval_context, desc=f"demand_rkva in {step_name}")
+                    rkva = _safe_eval(
+                        str(rkva_expr),
+                        eval_context,
+                        desc=f"demand_rkva in {step_name}",
+                    )
                     rkva = float(rkva or 0.0)
                     cost = rate * rkva
 
                 else:
                     # Unknown / unsupported charge type
-                    trace_log.append(f"{step_name}: charge_type '{charge_type}' unsupported; skipped.")
+                    trace_log.append(
+                        f"{step_name}: charge_type '{charge_type}' unsupported; skipped."
+                    )
                     continue
 
                 total_expected += cost

@@ -9,6 +9,7 @@ import pandas as pd
 
     # Project-style imports
 from src.utils.logger import get_logger
+from src.utils.data_paths import get_file_path
 from src.utils.helpers import clean_column_names
 from src.database.db_utils import (
         insert_bill_validation_result,
@@ -304,12 +305,16 @@ class BillAuditReporter:
 # ==========================================
 # Main Execution
 # ==========================================
+
+
 if __name__ == "__main__":
     # Example:
-    #   ACCOUNT_ID = "1120031219"  # audit single account
-    #   ACCOUNT_ID = None          # audit ALL accounts
+    #   ACCOUNT_ID = "1120031219"   # audit one account
+    #   ACCOUNT_ID = None           # audit ALL accounts
     ACCOUNT_ID = "1120031219"
-    TARIFF_FILE = "data/processed/tariff_definitions.json"
+
+    # Load tariff file from data/processed/tariff_definitions.json
+    TARIFF_FILE = get_file_path("processed", "tariff_definitions.json")
 
     reporter = BillAuditReporter(TARIFF_FILE)
 
@@ -318,8 +323,15 @@ if __name__ == "__main__":
 
     print("\n" + report_output)
 
+    # Determine output filename
     suffix = ACCOUNT_ID if ACCOUNT_ID else "all_accounts"
     output_filename = f"final_audit_report_{suffix}.txt"
-    with open(output_filename, "w") as f:
+
+    # Save under data/output/
+    full_output_path = get_file_path("output", output_filename)
+
+    with open(full_output_path, "w", encoding="utf-8") as f:
         f.write(report_output)
-    logger.info(f"Report saved to {output_filename}")
+
+    logger.info(f"Report saved to {full_output_path}")
+

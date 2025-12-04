@@ -10,6 +10,7 @@ import pandas as pd
     # Project-style imports
 from src.utils.logger import get_logger
 from src.utils.data_paths import get_file_path
+import pandas as pd
 from src.utils.helpers import clean_column_names
 from src.database.db_utils import (
         insert_bill_validation_result,
@@ -33,6 +34,7 @@ class BillAuditReporter:
         Initialize the reporter with the path to the tariff definitions JSON.
         """
         self.tariff_path = tariff_definitions_path
+        self.last_results: List[Dict] = []
 
         try:
             self.engine = AuditEngine(tariff_definitions_path)
@@ -58,7 +60,7 @@ class BillAuditReporter:
             return "Error: Audit Engine not initialized."
 
         logger.info(
-            f"🚀 Starting DB-based audit for account: {account_id if account_id else 'ALL ACCOUNTS'}"
+            f" Starting DB-based audit for account: {account_id if account_id else 'ALL ACCOUNTS'}"
         )
 
         # 1. Fetch bills from DB
@@ -167,6 +169,7 @@ class BillAuditReporter:
                 self._persist_validation_result(audit_entry, account_number, db_bills)
 
         logger.info("Audit generation complete.")
+        self.last_results = audit_results
         return self._format_text_report(audit_results, account_id)
 
     # ------------------------------------------------------------------ #
@@ -313,7 +316,7 @@ if __name__ == "__main__":
     #   ACCOUNT_ID = None           # audit ALL accounts
     ACCOUNT_ID = "1120031219"
 
-    # Load tariff file from data/processed/tariff_definitions.json
+    # Tariff JSON from data/processed
     TARIFF_FILE = get_file_path("processed", "tariff_definitions.json")
 
     reporter = BillAuditReporter(TARIFF_FILE)
@@ -321,17 +324,16 @@ if __name__ == "__main__":
     print("Generating Audit Report from DB...")
     report_output = reporter.generate_audit(account_id=ACCOUNT_ID)
 
+    # Still print the human-readable text report to the console
     print("\n" + report_output)
 
-    # Determine output filename
+    # Build Excel filename & path under data/output
     suffix = ACCOUNT_ID if ACCOUNT_ID else "all_accounts"
-    output_filename = f"final_audit_report_{suffix}.txt"
+    excel_filename = f"final_audit_report_{suffix}.xlsx"
+    excel_path = get_file_path("output", excel_filename)
 
-    # Save under data/output/
-    full_output_path = get_file_path("output", output_filename)
+    # Convert the stored results to a DataFrame and export to Excel
+    results_df = pd.DataFrame(reporter.last_results)
+    results_df.to_excel(excel_path, index=False)
 
-    with open(full_output_path, "w", encoding="utf-8") as f:
-        f.write(report_output)
-
-    logger.info(f"Report saved to {full_output_path}")
-
+    logger.info(f"Excel report saved to {excel_path}")

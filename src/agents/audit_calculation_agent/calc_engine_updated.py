@@ -411,7 +411,7 @@ class AuditEngine:
         # ---- final variance ----------------------------------------------
 
         actual_bill = float(row.get("bill_amount", 0.0) or 0.0)
-        variance = total_expected - actual_bill
+        variance = actual_bill-total_expected
 
         return {
             "status": "SUCCESS",

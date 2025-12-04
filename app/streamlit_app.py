@@ -154,8 +154,8 @@ elif page == "Pipeline Status":
     render_pipeline_monitor()
 
 elif page == "Generate Reports":
-    from app.components.reports_viewer import render_reports_viewer
-    render_reports_viewer()
+    from app.components.reports_viewer import render_report_viewer
+    render_report_viewer()
 
 # -----------------------------------------------------
 # FOOTER

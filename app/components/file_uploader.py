@@ -191,12 +191,16 @@ def render_file_uploader():
                     del st.session_state["bill_uploader"]
                 st.rerun()
 
-# -----------------------------
-# TAB 2: Tariff Upload
-# -----------------------------
+    # -----------------------------
+    # TAB 2: Tariff Upload
+    # -----------------------------
     with tab2:
         st.subheader("Upload Tariff Documents")
         st.caption("Upload the latest tariff document for your utility provider (PDF only).")
+
+        # store results
+        if "tariff_results" not in st.session_state:
+            st.session_state["tariff_results"] = []
 
         tariff_files = st.file_uploader(
             "Select tariff files",
@@ -205,111 +209,86 @@ def render_file_uploader():
             key="tariff_uploader"
         )
 
-        if tariff_files:
+        # If already processed -> show results cleanly
+        if st.session_state["tariff_results"]:
+            st.markdown("### 📦 Processed Tariff Files")
+
+            for result in st.session_state["tariff_results"]:
+                st.success(f"✔ {result['name']}")
+                st.json({
+                    "Grouped Tariffs": str(result["grouped"]),
+                    "Tariff Definitions": str(result["definitions"]),
+                    "Final Logic": str(result["logic"])
+                })
+
+            if st.button("Upload More Tariff Files"):
+                st.session_state["tariff_results"] = []
+                st.session_state["tariff_uploader"] = None
+                st.rerun()
+
+        # If uploading new files -> process them
+        elif tariff_files:
             tariff_dir = Path("data/raw/tariff")
             tariff_dir.mkdir(parents=True, exist_ok=True)
 
             for file in tariff_files:
                 try:
-                   # Create a full-page modal overlay
-                    st.markdown("""
-                            <style>
-                            .stApp {
-                                pointer-events: none;
-                            }
-                            div[data-testid="stAppViewContainer"] > section {
-                                filter: blur(5px);
-                            }
-                            section[data-testid="stSidebar"] {
-                                pointer-events: none;
-                                filter: blur(5px);
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
-                        
-                    processing_placeholder = st.empty()
-                        
-                    with processing_placeholder.container():
-                            st.markdown("""
-                                <div style='position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-                                    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
-                                    z-index: 9999; display: flex; align-items: center; justify-content: center;
-                                    pointer-events: all;'>
-                                    <div style='background: white; padding: 40px; border-radius: 10px; 
-                                        text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3);'>
-                                        <h2 style='color: #1f77b4; margin-bottom: 20px;'>🔄 Processing Tariff Document</h2>
-                                        <p style='font-size: 18px; font-weight: bold; color: #333; margin-bottom: 10px;'>{}</p>
-                                        <p style='color: #666; margin-bottom: 20px;'>Please wait while we upload and process the tariff data...</p>
-                                        <div style='width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden;'>
-                                            <div style='width: 50%; height: 100%; background: linear-gradient(90deg, #1f77b4, #4fc3f7); 
-                                                animation: loading 1.5s ease-in-out infinite;'></div>
-                                        </div>
-                                    </div>
+                    # ---------- FULL SCREEN OVERLAY ----------
+                    overlay = st.empty()
+                    overlay.markdown(f"""
+                        <style>
+                            .stApp {{ pointer-events:none; }}
+                            div[data-testid="stAppViewContainer"] > section {{ filter:blur(5px); }}
+                            section[data-testid="stSidebar"] {{ filter:blur(5px); pointer-events:none; }}
+                        </style>
+
+                        <div style='position:fixed; top:0; left:0; width:100vw; height:100vh;
+                                    background:rgba(0,0,0,0.7); z-index:9999;
+                                    display:flex; justify-content:center; align-items:center;'>
+                            <div style='background:white; padding:40px; border-radius:12px;
+                                        width:450px; text-align:center;'>
+                                <h2 style='color:#1f77b4;'>🔄 Processing Tariff</h2>
+                                <p style='font-size:18px; font-weight:600;'>{file.name}</p>
+                                <p style='color:#666;'>Extracting, grouping and analyzing tariff...</p>
+
+                                <div style='width:100%; height:6px; background:#e0e0e0; border-radius:4px; overflow:hidden;'>
+                                    <div style='width:50%; height:100%;
+                                        background:linear-gradient(90deg,#1f77b4,#4fc3f7);
+                                        animation:loading 1.5s ease-in-out infinite;'></div>
                                 </div>
-                                <style>
-                                @keyframes loading {{
-                                    0% {{ transform: translateX(-100%); }}
-                                    50% {{ transform: translateX(100%); }}
-                                    100% {{ transform: translateX(-100%); }}
-                                }}
-                                </style>
-                            """.format(file.name), unsafe_allow_html=True)
-                        
-                        # Process the file
+                            </div>
+                        </div>
+
+                        <style>
+                        @keyframes loading {{
+                            0% {{ transform:translateX(-100%); }}
+                            50% {{ transform:translateX(100%); }}
+                            100% {{ transform:translateX(-100%); }}
+                        }}
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                    # ---------- SAVE FILE ----------
                     file_path = tariff_dir / file.name
                     file_path.write_bytes(file.read())
 
-                    # ---------------------------------------------------------
-                    # 🔥 CALL THE PIPELINE HERE
-                    # ---------------------------------------------------------
+                    # ---------- RUN PIPELINE ----------
                     from src.agents.tariff_analysis_agent.pipeline_runner import run_tariff_pipeline
+                    results = run_tariff_pipeline(file_path)
 
-                    try:
-                        results = run_tariff_pipeline(file_path)
+                    # ---------- SAVE RESULTS ----------
+                    st.session_state["tariff_results"].append({
+                        "name": file.name,
+                        "grouped": results["grouped_tariffs"],
+                        "definitions": results["tariff_definitions"],
+                        "logic": results["final_logic"]
+                    })
 
-                        st.success(f"✔ Processed tariff: {file.name}")
-                        st.json({
-                            "Grouped Tariffs": str(results["grouped_tariffs"]),
-                            "Tariff Definitions": str(results["tariff_definitions"]),
-                            "Final Logic": str(results["final_logic"])
-                        })
+                    # ---------- CLEAR OVERLAY + REFRESH ----------
+                    overlay.empty()
+                    st.session_state["tariff_uploader"] = None
+                    st.rerun()
 
-                    except Exception as e:
-                        st.error(f"❌ Pipeline failed: {e}")
-                        continue  # go to next file
-                    # ---------------------------------------------------------
-
-                    # Log metadata (optional)
-                    metadata = {
-                        "file_name": file.name,
-                        "file_type": Path(file.name).suffix.lower(),
-                        "upload_date": datetime.utcnow(),
-                        "source": "User Upload (Tariff)",
-                        "status": "uploaded"
-                    }
-                    insert_raw_bill_document(metadata)
-
-                        
-                        # Clear the processing overlay and re-enable page
-                    processing_placeholder.empty()
-                    st.markdown("""
-                            <style>
-                            .stApp {
-                                pointer-events: auto;
-                            }
-                            div[data-testid="stAppViewContainer"] > section {
-                                filter: none;
-                            }
-                            section[data-testid="stSidebar"] {
-                                pointer-events: auto;
-                                filter: none;
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
-                        
-                    st.success(f"✅ Tariff file uploaded and logged: {file.name}")
-                        
                 except Exception as e:
-                    st.error(f"❌ Error logging tariff file {file.name}: {e}")
-
-            st.info("💡 Tip: Tariff processed successfully. Check Tariff Analysis section.")
+                    overlay.empty()
+                    st.error(f"❌ Failed to process {file.name}: {e}")

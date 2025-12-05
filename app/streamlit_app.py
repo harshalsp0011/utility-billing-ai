@@ -44,6 +44,21 @@ except:
 
 import streamlit as st
 
+# Initialize database on app startup
+@st.cache_resource
+def initialize_database():
+    """Initialize database tables on first run."""
+    try:
+        from src.database.init_db import init_db
+        init_db()
+        logger.info("✅ Database initialized successfully")
+    except Exception as e:
+        logger.error(f"⚠️ Database initialization error: {e}")
+        # Continue anyway - tables might already exist
+
+# Call initialization once per session
+initialize_database()
+
 # -----------------------------------------------------
 # PAGE SETTINGS
 # -----------------------------------------------------

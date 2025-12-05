@@ -348,6 +348,7 @@ def fetch_all_account_numbers():
 
     except SQLAlchemyError as e:
         logger.error(f"❌ Failed to fetch account numbers: {e}")
+        # Return empty list instead of crashing - tables might not exist yet
         return []
 
     finally:

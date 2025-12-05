@@ -138,7 +138,7 @@ def extract_tariff_logic_hybrid(input_file, output_file):
 def _get_default_paths():
     root = Path(__file__).resolve().parents[3]
     input_path = root / "data" / "processed" / "grouped_tariffs.json"
-    output_path = root / "data" / "processed" / "tariff_definitions.json"
+    output_path = root / "data" / "processed" / "final_logic_output.json"
     return input_path, output_path
 
 if __name__ == "__main__":
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         # Fallback check
         if Path("grouped_tariffs.json").exists():
             in_file = Path("grouped_tariffs.json")
-            out_file = Path("tariff_definitions.json")
+            out_file = Path("final_logic_output.json")
     
     if in_file.exists():
         extract_tariff_logic_hybrid(str(in_file), str(out_file))

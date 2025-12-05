@@ -14,7 +14,12 @@ import glob
 # Resolve project root and make input/output paths absolute so the script
 # always writes to the repo-level data/processed directory regardless of cwd.
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-PDF_PATH = PROJECT_ROOT / Path("data/raw/NationalGrid_Tariff-NewYork.pdf")
+
+# Accept PDF path from command line argument, otherwise use default
+if len(sys.argv) > 1:
+    PDF_PATH = Path(sys.argv[1])
+else:
+    PDF_PATH = PROJECT_ROOT / Path("data/raw/NationalGrid_Tariff-NewYork.pdf")
 OUTPUT_PATH = PROJECT_ROOT / Path("data/processed/raw_extracted_tarif.json")
 
 def extract_with_pdfplumber(pdf_path: Path):

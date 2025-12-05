@@ -42,6 +42,32 @@ LOG_FILE = os.path.join(LOG_DIR, "utility_billing.log")
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
+
+class DBLogHandler(logging.Handler):
+    """Custom handler to persist logs to the database."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            # Lazy import to avoid circular deps at module load
+            from src.database.db_utils import insert_log_entry
+
+            message = self.format(record)
+            context = {
+                "module": record.module,
+                "filename": record.filename,
+                "lineno": record.lineno,
+                "funcName": record.funcName,
+            }
+            insert_log_entry(
+                level=record.levelname,
+                message=message,
+                logger_name=record.name,
+                context=context,
+            )
+        except Exception:
+            # Avoid raising from logging handler to prevent infinite recursion
+            pass
+
 # ----------------------------------------------------------------------
 # 4️⃣ Logging setup function
 # ----------------------------------------------------------------------
@@ -64,15 +90,22 @@ def get_logger(name: str = "utility-billing-ai") -> logging.Logger:
 
     # Avoid duplicate handlers
     if not logger.handlers:
+        formatter = logging.Formatter(LOG_FORMAT, DATE_FORMAT)
+
         # Console handler
         console_handler = logging.StreamHandler()
-        console_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
+        console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
         # File handler
         file_handler = logging.FileHandler(LOG_FILE, mode="a")
-        file_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
+        file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
+
+        # DB handler
+        db_handler = DBLogHandler()
+        db_handler.setFormatter(formatter)
+        logger.addHandler(db_handler)
 
     return logger
 

@@ -26,7 +26,7 @@ from typing import Union, Optional
 from src.utils.config import DB_URL
 from src.utils.logger import get_logger
 from src.database.models import BillValidationResult, RawBillDocument,PipelineRun, UserBills
-from src.database.models import TariffDocument, TariffLogicVersion
+from src.database.models import TariffDocument, TariffLogicVersion, LogEntry
 
 
 logger = get_logger(__name__)
@@ -50,6 +50,31 @@ def get_session():
     if _SessionLocal is None:
         _SessionLocal = sessionmaker(bind=get_engine())
     return _SessionLocal()
+
+
+# ----------------------------------------------------------------------
+# 2a️⃣ Insert Log Entry
+# ----------------------------------------------------------------------
+def insert_log_entry(level: str, message: str, logger_name: str = None, context: dict = None):
+    """Insert a log record into the database.
+
+    This function intentionally avoids logger usage to prevent recursive logging
+    when called from logging handlers.
+    """
+    session = get_session()
+    try:
+        entry = LogEntry(
+            level=level,
+            message=message,
+            logger_name=logger_name,
+            context=context,
+        )
+        session.add(entry)
+        session.commit()
+    except SQLAlchemyError:
+        session.rollback()
+    finally:
+        session.close()
 
 # ----------------------------------------------------------------------
 # 2️⃣ Insert Functions

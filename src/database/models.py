@@ -83,6 +83,20 @@ class BillValidationResult(Base):
 # 
 
 
+class LogEntry(Base):
+    """
+    Stores application logs for audit/debug.
+    """
+    __tablename__ = "logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    level = Column(String(20), nullable=False)
+    message = Column(Text, nullable=False)
+    logger_name = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    context = Column(JSONB)
+
+
 # --- New: Tariff Documents ---
 class TariffDocument(Base):
     """

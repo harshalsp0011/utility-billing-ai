@@ -47,7 +47,7 @@ def run_tariff_pipeline(pdf_path: Path):
     if not step3.exists():
         raise FileNotFoundError(f"Missing: {step3}")
 
-    subprocess.run([sys.executable, str(step3)], check=True)
+    subprocess.run([sys.executable, str(step3), str(pdf_path)], check=True)
 
     logic_json = PROJECT_ROOT / "data" / "processed" / "final_logic_output.json"
     if not logic_json.exists():

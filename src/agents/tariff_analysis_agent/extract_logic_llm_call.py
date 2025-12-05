@@ -28,9 +28,22 @@ from src.database.db_utils import (
 
 load_dotenv()
 
-API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL = os.getenv("OPENAI_MODEL")
-DATABASE_URL = os.getenv("DB_URL")
+def get_env(key: str, default=None):
+    """
+    Get environment variable from Streamlit secrets (if available)
+    or from os.environ/.env (for local development).
+    """
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    except (ImportError, AttributeError, KeyError, FileNotFoundError):
+        pass
+    return os.getenv(key, default)
+
+API_KEY = get_env("OPENAI_API_KEY")
+MODEL = get_env("OPENAI_MODEL")
+DATABASE_URL = get_env("DB_URL")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

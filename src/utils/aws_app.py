@@ -17,11 +17,24 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+def get_env(key: str, default=None):
+    """
+    Get environment variable from Streamlit secrets (if available)
+    or from os.environ/.env (for local development).
+    """
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    except (ImportError, AttributeError, KeyError, FileNotFoundError):
+        pass
+    return os.getenv(key, default)
+
 # AWS Configuration
-AWS_ACCESS_KEY_ID = os.getenv("aws_access_key_id")
-AWS_SECRET_ACCESS_KEY = os.getenv("Secret_access_key")
-BUCKET_NAME = os.getenv("AWS_BUCKET_NAME", "utility-billing-data")
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1").strip()
+AWS_ACCESS_KEY_ID = get_env("aws_access_key_id")
+AWS_SECRET_ACCESS_KEY = get_env("Secret_access_key")
+BUCKET_NAME = get_env("AWS_BUCKET_NAME", "utility-billing-data")
+AWS_REGION = get_env("AWS_REGION", "us-east-1").strip()
 
 # Clean up region name - extract just the region code if it contains extra text
 if " " in AWS_REGION:

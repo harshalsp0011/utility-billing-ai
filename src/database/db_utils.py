@@ -21,7 +21,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
 from datetime import datetime
-from sqlalchemy import text
 from typing import Union, Optional
 from src.utils.config import DB_URL
 from src.utils.logger import get_logger
@@ -284,57 +283,76 @@ def fetch_user_bills(account_id: Optional[str] = None):
     Optionally filter by bill_account.
     """
     logger.info("start of fetch_user_bills")
-    engine = get_engine()
+    session = get_session()
 
     try:
-        with engine.connect() as connection:
-            if account_id:
-                stmt = text("""
-                    SELECT *
-                    FROM user_bills
-                    WHERE TRIM(bill_account)::text = TRIM(:acct)::text
-                """)
-                result = connection.execute(stmt, {"acct": account_id})
-            else:
-                result = connection.execute(text("SELECT * FROM user_bills"))
-
-            rows = result.mappings().all()
-            df = pd.DataFrame(rows)
-
+        query = session.query(UserBills)
+        
+        if account_id:
+            # Filter by bill_account with trim
+            query = query.filter(UserBills.bill_account == account_id.strip())
+        
+        results = query.all()
+        
+        # Convert ORM objects to list of dicts for pandas DataFrame
+        data = [
+            {
+                'id': r.id,
+                'bill_account': r.bill_account,
+                'customer': r.customer,
+                'bill_date': r.bill_date,
+                'read_date': r.read_date,
+                'days_used': r.days_used,
+                'billed_kwh': r.billed_kwh,
+                'billed_demand': r.billed_demand,
+                'load_factor': r.load_factor,
+                'billed_rkva': r.billed_rkva,
+                'bill_amount': r.bill_amount,
+                'sales_tax_amt': r.sales_tax_amt,
+                'bill_amount_with_sales_tax': r.bill_amount_with_sales_tax,
+                'retracted_amt': r.retracted_amt,
+                'sales_tax_factor': r.sales_tax_factor,
+                'created_at': r.created_at,
+            }
+            for r in results
+        ]
+        
+        df = pd.DataFrame(data)
         logger.info(f"📊 Fetched {len(df)} UserBills rows.")
         return df
 
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(f"❌ Failed to fetch UserBills: {e}")
         return pd.DataFrame()
 
     finally:
         logger.info("end of fetch_user_bills")
+        session.close()
 
 
 
 def fetch_all_account_numbers():
     """Return a list of all distinct bill_account values from user_bills."""
     logger.info("start of fetch_all_account_numbers")
-    engine = get_engine()
+    session = get_session()
 
     try:
-        with engine.connect() as connection:
-            stmt = text("SELECT DISTINCT bill_account FROM user_bills")
-            result = connection.execute(stmt)
+        # Use ORM to query distinct account numbers
+        accounts = session.query(UserBills.bill_account).distinct().all()
+        
+        # Extract the account values from the result tuples
+        account_list = [account[0] for account in accounts if account[0]]
 
-            # Extract the column into a Python list
-            accounts = [row[0] for row in result.fetchall()]
+        logger.info(f"📌 Found {len(account_list)} distinct account numbers.")
+        return account_list
 
-        logger.info(f"📌 Found {len(accounts)} distinct account numbers.")
-        return accounts
-
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(f"❌ Failed to fetch account numbers: {e}")
         return []
 
     finally:
         logger.info("end of fetch_all_account_numbers")
+        session.close()
 
 
 
@@ -435,66 +453,88 @@ def update_bill_validation_result(result_id: int, updates: dict):
 def fetch_user_bills_with_issues(account_id: str, issue_type: Optional[str] = None):
     """
     Fetch ONLY the user bills that have validation issues
-    for the given account_id.
+    for the given account_id using SQLAlchemy ORM.
     """
     logger.info("start of fetch_user_bills_with_issues")
-    engine = get_engine()
+    session = get_session()
 
     try:
-        with engine.connect() as connection:
-            base_sql = """
-SELECT
-    ub.id AS bill_id,
-    bvr.user_bill_id AS fk_user_bill_id,
-    bvr.id AS issue_id,
-    ub.bill_account,
-    ub.customer,
-    ub.bill_date,
-    ub.read_date,
-    ub.days_used,
-    ub.billed_kwh,
-    ub.billed_demand,
-    ub.load_factor,
-    ub.billed_rkva,
-    ub.bill_amount,
-    ub.sales_tax_amt,
-    ub.bill_amount_with_sales_tax,
-    ub.retracted_amt,
-    ub.sales_tax_factor,
-    ub.created_at AS bill_created_at,
-
-    bvr.issue_type,
-    bvr.description,
-    bvr.status,
-    bvr.detected_on
-FROM user_bills AS ub
-JOIN bill_validation_results AS bvr
-    ON ub.id = bvr.user_bill_id
-WHERE TRIM(ub.bill_account)::text = TRIM(:acct)::text
-
-"""
-
-
-            params = {"acct": account_id}
-
-            if issue_type:
-                base_sql += " AND bvr.issue_type = :issue"
-                params["issue"] = issue_type
-
-            result = connection.execute(text(base_sql), params)
-            rows = result.mappings().all()
-
-            df = pd.DataFrame(rows)
-
+        # Query with JOIN between UserBills and BillValidationResult
+        query = session.query(
+            UserBills.id.label('bill_id'),
+            BillValidationResult.user_bill_id.label('fk_user_bill_id'),
+            BillValidationResult.id.label('issue_id'),
+            UserBills.bill_account,
+            UserBills.customer,
+            UserBills.bill_date,
+            UserBills.read_date,
+            UserBills.days_used,
+            UserBills.billed_kwh,
+            UserBills.billed_demand,
+            UserBills.load_factor,
+            UserBills.billed_rkva,
+            UserBills.bill_amount,
+            UserBills.sales_tax_amt,
+            UserBills.bill_amount_with_sales_tax,
+            UserBills.retracted_amt,
+            UserBills.sales_tax_factor,
+            UserBills.created_at.label('bill_created_at'),
+            BillValidationResult.issue_type,
+            BillValidationResult.description,
+            BillValidationResult.status,
+            BillValidationResult.detected_on,
+        ).join(
+            BillValidationResult,
+            UserBills.id == BillValidationResult.user_bill_id
+        ).filter(
+            UserBills.bill_account == account_id.strip()
+        )
+        
+        if issue_type:
+            query = query.filter(BillValidationResult.issue_type == issue_type)
+        
+        results = query.all()
+        
+        # Convert to DataFrame
+        data = [
+            {
+                'bill_id': r.bill_id,
+                'fk_user_bill_id': r.fk_user_bill_id,
+                'issue_id': r.issue_id,
+                'bill_account': r.bill_account,
+                'customer': r.customer,
+                'bill_date': r.bill_date,
+                'read_date': r.read_date,
+                'days_used': r.days_used,
+                'billed_kwh': r.billed_kwh,
+                'billed_demand': r.billed_demand,
+                'load_factor': r.load_factor,
+                'billed_rkva': r.billed_rkva,
+                'bill_amount': r.bill_amount,
+                'sales_tax_amt': r.sales_tax_amt,
+                'bill_amount_with_sales_tax': r.bill_amount_with_sales_tax,
+                'retracted_amt': r.retracted_amt,
+                'sales_tax_factor': r.sales_tax_factor,
+                'bill_created_at': r.bill_created_at,
+                'issue_type': r.issue_type,
+                'description': r.description,
+                'status': r.status,
+                'detected_on': r.detected_on,
+            }
+            for r in results
+        ]
+        
+        df = pd.DataFrame(data)
         logger.info(f"⚠️ Found {len(df)} bills WITH issues for account {account_id}.")
         return df
 
-    except Exception as e:
+    except SQLAlchemyError as e:
         logger.error(f"❌ Failed to fetch bills with issues: {e}")
         return pd.DataFrame()
 
     finally:
         logger.info("end of fetch_user_bills_with_issues")
+        session.close()
 
 
 # ----------------------------------------------------------------------

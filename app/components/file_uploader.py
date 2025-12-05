@@ -274,16 +274,16 @@ def render_file_uploader():
 
                     # ---------- RUN PIPELINE ----------
                     from src.agents.tariff_analysis_agent.pipeline_runner import run_tariff_pipeline
-                    #results = run_tariff_pipeline(file_path)
-                    run_tariff_pipeline(file_path)
+                    results = run_tariff_pipeline(file_path)
+                    #run_tariff_pipeline(file_path)
 
-                    # # ---------- SAVE RESULTS ----------
-                    # st.session_state["tariff_results"].append({
-                    #     "name": file.name,
-                    #     "grouped": results["grouped_tariffs"],
-                    #     "definitions": results["tariff_definitions"],
-                    #     "logic": results["final_logic"]
-                    # })
+                    # ---------- SAVE RESULTS ----------
+                    st.session_state["tariff_results"].append({
+                        "name": file.name,
+                        "grouped": results["grouped_tariffs"],
+                        "definitions": results["tariff_definitions"],
+                        "logic": results["final_logic"]
+                    })
 
                     # ---------- CLEAR OVERLAY + REFRESH ----------
                     overlay.empty()

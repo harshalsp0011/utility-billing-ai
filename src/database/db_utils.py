@@ -55,16 +55,24 @@ def get_session():
 # ----------------------------------------------------------------------
 # 2a️⃣ Insert Log Entry
 # ----------------------------------------------------------------------
-def insert_log_entry(level: str, message: str, logger_name: str = None, context: dict = None):
+def insert_log_entry(level: str, description: str, message: str, logger_name: str = None, context: dict = None):
     """Insert a log record into the database.
 
     This function intentionally avoids logger usage to prevent recursive logging
     when called from logging handlers.
+    
+    Args:
+        level: Log level (INFO, WARNING, ERROR, etc.)
+        description: Raw log message (e.g., "start of fetch_user_bills")
+        message: Formatted log message with timestamp and logger name
+        logger_name: Name of the logger
+        context: Additional context (module, filename, line number, etc.)
     """
     session = get_session()
     try:
         entry = LogEntry(
             level=level,
+            description=description,
             message=message,
             logger_name=logger_name,
             context=context,

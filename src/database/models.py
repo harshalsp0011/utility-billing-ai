@@ -91,6 +91,7 @@ class LogEntry(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     level = Column(String(20), nullable=False)
+    description = Column(Text, nullable=False)
     message = Column(Text, nullable=False)
     logger_name = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

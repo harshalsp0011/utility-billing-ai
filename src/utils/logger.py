@@ -51,7 +51,12 @@ class DBLogHandler(logging.Handler):
             # Lazy import to avoid circular deps at module load
             from src.database.db_utils import insert_log_entry
 
+            # Raw message (just the log message itself)
+            description = record.getMessage()
+            
+            # Formatted message (with timestamp, level, logger name)
             message = self.format(record)
+            
             context = {
                 "module": record.module,
                 "filename": record.filename,
@@ -60,6 +65,7 @@ class DBLogHandler(logging.Handler):
             }
             insert_log_entry(
                 level=record.levelname,
+                description=description,
                 message=message,
                 logger_name=record.name,
                 context=context,

@@ -53,12 +53,17 @@ def extract_tariff_logic_hybrid(input_file, output_file):
     with open(input_file, 'r') as f:
         grouped_data = json.load(f)
 
-    # Hardcoded Filename for now (In prod, pass this as an argument)
-    CURRENT_PDF_FILENAME = "NationalGrid_Tariff-NewYork.pdf"
+    # Accept filename from command line argument, otherwise use default
+    if len(sys.argv) > 1:
+        pdf_filename = sys.argv[1]
+        CURRENT_PDF_FILENAME = Path(pdf_filename).name  # Extract just the filename
+    else:
+        print("No PDF filename provided as argument; using default.")
+        logger.info(" No PDF filename provided as argument.")
     UTILITY_NAME = "National Grid NY"
     
     all_definitions_for_file = []
-    db_engine = get_engine()
+    #db_engine = get_engine()
 
     try:
         # 1. Register Source Document (no conn needed - uses session internally)

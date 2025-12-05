@@ -103,11 +103,6 @@ def get_logger(name: str = "utility-billing-ai") -> logging.Logger:
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-        # File handler
-        file_handler = logging.FileHandler(LOG_FILE, mode="a")
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
         # DB handler
         db_handler = DBLogHandler()
         db_handler.setFormatter(formatter)

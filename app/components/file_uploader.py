@@ -217,7 +217,6 @@ def render_file_uploader():
                 st.success(f"✔ {result['name']}")
                 st.json({
                     "Grouped Tariffs": str(result["grouped"]),
-                    "Tariff Definitions": str(result["definitions"]),
                     "Final Logic": str(result["logic"])
                 })
 
@@ -281,7 +280,6 @@ def render_file_uploader():
                     st.session_state["tariff_results"].append({
                         "name": file.name,
                         "grouped": results["grouped_tariffs"],
-                        "definitions": results["tariff_definitions"],
                         "logic": results["final_logic"]
                     })
 

@@ -3,6 +3,9 @@ import subprocess
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.utils.aws_app import file_exists_in_s3, get_s3_key
 
 def run_tariff_pipeline(pdf_path: Path):
 
@@ -21,9 +24,10 @@ def run_tariff_pipeline(pdf_path: Path):
 
     subprocess.run([sys.executable, str(step1), str(pdf_path)], check=True)
 
-    grouped_json = PROJECT_ROOT / "data" / "processed" / "grouped_tariffs.json"
-    if not grouped_json.exists():
-        raise RuntimeError("grouped_tariffs.json was not created.")
+    # Check if output exists in S3 only
+    s3_key_raw = get_s3_key("processed", "raw_extracted_tarif.json")
+    if not file_exists_in_s3(s3_key_raw):
+        raise RuntimeError(f"raw_extracted_tarif.json was not created in S3: {s3_key_raw}")
     print("✅ Step 1/3: Text extraction completed!")
 
     # ======================================================
@@ -49,19 +53,20 @@ def run_tariff_pipeline(pdf_path: Path):
 
     subprocess.run([sys.executable, str(step3), str(pdf_path)], check=True)
 
-    logic_json = PROJECT_ROOT / "data" / "processed" / "final_logic_output.json"
-    if not logic_json.exists():
-        raise RuntimeError("final_logic_output.json was not created.")
+    # Check if output exists in S3 only
+    s3_key_logic = get_s3_key("processed", "final_logic_output.json")
+    if not file_exists_in_s3(s3_key_logic):
+        raise RuntimeError(f"final_logic_output.json was not created in S3: {s3_key_logic}")
     print("✅ Step 3/3: Logic extraction completed!")
 
     print("\n" + "="*60)
     print("✅ TARIFF PIPELINE COMPLETED SUCCESSFULLY!")
     print("="*60)
-    print(f"📄 Grouped Tariffs: {grouped_json}")
-    print(f"🎯 Final Logic Output: {logic_json}")
+    print(f"📄 Grouped Tariffs: s3://{get_s3_key('processed', 'grouped_tariffs.json')}")
+    print(f"🎯 Final Logic Output: s3://{get_s3_key('processed', 'final_logic_output.json')}")
     print("="*60 + "\n")
 
     return {
-        "grouped_tariffs": grouped_json,
-        "final_logic": logic_json
+        "grouped_tariffs": get_s3_key('processed', 'grouped_tariffs.json'),
+        "final_logic": get_s3_key('processed', 'final_logic_output.json')
     }

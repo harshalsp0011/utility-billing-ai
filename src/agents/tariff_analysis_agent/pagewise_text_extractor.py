@@ -12,6 +12,10 @@ from pathlib import Path
 import sys
 import glob
 
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.utils.aws_app import upload_json_to_s3, get_s3_key
+
 # Resolve project root and make input/output paths absolute so the script
 # always writes to the repo-level data/processed directory regardless of cwd.
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -81,10 +85,12 @@ def merge_text_and_tables(pages_data, tables):
     return pages_data
 
 def save_output(data, path: Path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump({"pages": data}, f, indent=2)
-    print(f"✅ Extracted text and tables saved to: {path}")
+    # Upload directly to S3 (no local storage)
+    s3_key = get_s3_key("processed", path.name)
+    if upload_json_to_s3({"pages": data}, s3_key):
+        print(f"✅ Uploaded to S3: {s3_key}")
+    else:
+        raise Exception(f"Failed to upload to S3: {s3_key}")
 
 if __name__ == "__main__":
     # Allow passing a PDF path on the command line: `python extract_pdf.py /path/to/file.pdf`

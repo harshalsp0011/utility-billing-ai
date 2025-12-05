@@ -2,9 +2,15 @@ import streamlit as st
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
+import tempfile
 
 from src.database.db_utils import insert_raw_bill_document
 from src.agents.document_processor_agent.utility_bill_doc_processor import process_bill
+from src.utils.aws_app import (
+    upload_fileobject_to_s3,
+    get_s3_key,
+    download_to_temp
+)
 
 
 def render_file_uploader():
@@ -18,30 +24,38 @@ def render_file_uploader():
     # Tab navigation for separate sections
     tab1, tab2 = st.tabs(["📄 Bill Documents", "⚡ Tariff Documents"])
 
-    # -----------------------------
+    # ====================================
     # TAB 1: Bill Upload
-    # -----------------------------
+    # ====================================
     with tab1:
-        st.subheader("Upload Bill Files ")
-        st.caption("Upload your utility bill documents for processing and anomaly detection. (PDF only)")
-
-        # Show uploader only when not processed yet
-        bill_file = None
-        if not st.session_state["bill_processed"]:
-            bill_file = st.file_uploader(
-                "",
-                type=["pdf"],
-                accept_multiple_files=False,
-                key="bill_uploader"
-            )
+        st.subheader("📄 Bill Documents Management")
+        
+        st.markdown("### 📤 Upload New Bill")
+        st.caption("Upload your utility bill (PDF only)")
+        
+        bill_file = st.file_uploader(
+            "Choose a PDF bill file",
+            type=["pdf"],
+            accept_multiple_files=False,
+            key="bill_uploader"
+        )
 
         if bill_file:
-            save_dir = Path("data/raw")
-            save_dir.mkdir(parents=True, exist_ok=True)
-
             file = bill_file
-            file_path = save_dir / file.name
-            file_path.write_bytes(file.read())
+            
+            # Upload to S3
+            s3_key = get_s3_key("raw", file.name)
+            if not upload_fileobject_to_s3(file, s3_key):
+                st.error(f"Failed to upload {file.name} to S3")
+                st.stop()
+            
+            # Download to temp for processing
+            temp_path = download_to_temp(s3_key)
+            if not temp_path:
+                st.error(f"Failed to download {file.name} from S3 for processing")
+                st.stop()
+            
+            file_path = Path(temp_path)
 
             # Log upload in DB
             metadata = {
@@ -49,7 +63,8 @@ def render_file_uploader():
                 "file_type": Path(file.name).suffix.lower(),
                 "upload_date": datetime.utcnow(),
                 "source": "User Upload (Bill)",
-                "status": "uploaded"
+                "status": "uploaded",
+                "s3_key": s3_key
             }
 
             try:
@@ -108,6 +123,13 @@ def render_file_uploader():
                 # Process the file
                 df, total_anomalies = process_bill(file_path)
                 
+                # Clean up temp file
+                import os
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+                
                 # Clear the processing overlay and re-enable page
                 processing_placeholder.empty()
                 st.markdown("""
@@ -155,8 +177,8 @@ def render_file_uploader():
             except Exception as e:
                 st.error(f"❌ Failed to process {file.name}: {e}")
 
-        # When processed, show results from session without uploader
-        elif st.session_state["bill_processed"] and st.session_state["bill_results"]:
+        # When processed, show results from session
+        if st.session_state["bill_processed"] and st.session_state["bill_results"]:
             res = st.session_state["bill_results"]
             st.markdown(f"### 📄 {res['file_name']}")
             col1, col2 = st.columns([1, 3])
@@ -165,20 +187,19 @@ def render_file_uploader():
             with col2:
                 st.info("💡 Tip: check Audit Bills section to get better insights.")
             st.dataframe(res["dataframe"], width='stretch')
-            # Optional: button to upload another file
+            
             # Highlight the "Upload another bill" button with a more prominent color
             st.markdown(
                 """
                 <style>
-                /* Style only the button in this section */
                 div[data-testid="stButton"] > button {
-                    background-color: #ff9800 !important; /* Amber */
+                    background-color: #ff9800 !important;
                     color: white !important;
                     border: none !important;
                     box-shadow: 0 2px 6px rgba(255, 152, 0, 0.4) !important;
                 }
                 div[data-testid="stButton"] > button:hover {
-                    background-color: #fb8c00 !important; /* Darker Amber */
+                    background-color: #fb8c00 !important;
                 }
                 </style>
                 """,
@@ -191,9 +212,9 @@ def render_file_uploader():
                     del st.session_state["bill_uploader"]
                 st.rerun()
 
-    # -----------------------------
+    # ====================================
     # TAB 2: Tariff Upload
-    # -----------------------------
+    # ====================================
     with tab2:
         st.subheader("Upload Tariff Documents")
         st.caption("Upload the latest tariff document for your utility provider (PDF only).")
@@ -203,7 +224,7 @@ def render_file_uploader():
             st.session_state["tariff_results"] = []
 
         tariff_files = st.file_uploader(
-            "Select tariff files",
+            "Choose tariff PDF files",
             type=["pdf"],
             accept_multiple_files=True,
             key="tariff_uploader"
@@ -227,9 +248,6 @@ def render_file_uploader():
 
         # If uploading new files -> process them
         elif tariff_files:
-            tariff_dir = Path("data/raw/tariff")
-            tariff_dir.mkdir(parents=True, exist_ok=True)
-
             for file in tariff_files:
                 try:
                     # ---------- FULL SCREEN OVERLAY ----------
@@ -267,14 +285,28 @@ def render_file_uploader():
                         </style>
                     """, unsafe_allow_html=True)
 
-                    # ---------- SAVE FILE ----------
-                    file_path = tariff_dir / file.name
-                    file_path.write_bytes(file.read())
+                    # ---------- UPLOAD TO S3 ----------
+                    s3_key = get_s3_key("raw/tariff", file.name)
+                    if not upload_fileobject_to_s3(file, s3_key):
+                        raise Exception(f"Failed to upload {file.name} to S3")
+                    
+                    # ---------- DOWNLOAD TO TEMP FOR PROCESSING ----------
+                    temp_path = download_to_temp(s3_key)
+                    if not temp_path:
+                        raise Exception(f"Failed to download {file.name} from S3")
+                    
+                    file_path = Path(temp_path)
 
                     # ---------- RUN PIPELINE ----------
                     from src.agents.tariff_analysis_agent.pipeline_runner import run_tariff_pipeline
                     results = run_tariff_pipeline(file_path)
-                    #run_tariff_pipeline(file_path)
+                    
+                    # Clean up temp file
+                    import os
+                    try:
+                        os.unlink(temp_path)
+                    except:
+                        pass
 
                     # ---------- SAVE RESULTS ----------
                     st.session_state["tariff_results"].append({
@@ -289,5 +321,5 @@ def render_file_uploader():
                     st.rerun()
 
                 except Exception as e:
-                    overlay.empty()
-                    st.error(f"❌ Failed to process {file.name}: {e}")
+                    st.error(f"Error processing {file.name}: {e}")
+                    st.info("Please try uploading the file again.")

@@ -1,8 +1,13 @@
 import json
 import re
 import os
+import sys
 from pathlib import Path
 from datetime import datetime
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.utils.aws_app import download_json_from_s3, upload_json_to_s3, get_s3_key
 
 def parse_effective_date(text_block):
     """
@@ -31,14 +36,14 @@ def parse_effective_date(text_block):
     return None
 
 def group_tariffs_v3(input_file, output_file):
-    print(f"🔹 Loading {input_file}...")
+    print(f"🔹 Loading {input_file} from S3...")
     
-    if not os.path.exists(input_file):
-        print(f"❌ Error: {input_file} not found.")
-        return
-
-    with open(input_file, 'r') as f:
-        data = json.load(f)
+    # Load from S3 only
+    s3_key_input = get_s3_key("processed", Path(input_file).name)
+    data = download_json_from_s3(s3_key_input)
+    
+    if not data:
+        raise Exception(f"❌ Error: {input_file} not found in S3: {s3_key_input}")
 
     # Header Regex
     header_pattern = re.compile(
@@ -129,10 +134,5 @@ def _get_default_paths():
 
 if __name__ == "__main__":
     input_file, output_file = _get_default_paths()
-    if not input_file.exists():
-        if Path('raw_extracted_tarif.json').exists():
-            group_tariffs_v3('raw_extracted_tarif.json', 'grouped_tariffs.json')
-        else:
-            print(f"Input file not found: {input_file}")
-    else:
-        group_tariffs_v3(str(input_file), str(output_file))
+    # Run directly - will fetch from S3
+    group_tariffs_v3(str(input_file), str(output_file))

@@ -91,7 +91,8 @@ page_icons = {
     "Manage Tariffs": "📑",
     "Execute Pipeline": "▶️",
     "Pipeline Status": "📊",
-    "Generate Reports": "📋"
+    "Generate Reports": "📋",
+    "Upload History": "📜",
 }
 
 # Add custom HTML for tooltip support
@@ -103,7 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
         '📄': 'Audit Bills',
         '▶️': 'Execute Pipeline',
         '📊': 'Pipeline Status',
-        '📋': 'Generate Reports'
+        '📋': 'Generate Reports',
+        '📑': 'Manage Tariffs',
+        '📜': 'Upload History'
     };
     
     setTimeout(() => {
@@ -156,6 +159,10 @@ elif page == "Pipeline Status":
 elif page == "Generate Reports":
     from app.components.reports_viewer import render_report_viewer
     render_report_viewer()
+
+elif page == "Upload History":
+    from app.components.upload_history import render_upload_history
+    render_upload_history()
 
 # -----------------------------------------------------
 # FOOTER

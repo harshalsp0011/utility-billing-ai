@@ -356,8 +356,8 @@ def process_bill(pdf_path: Path):
     # Validate each unique account once after all bills are inserted
     for account in validated_accounts:
         try:
-            #anomalies = validate_account_with_llm(account)
-            anomalies = anomalies or {}
+            anomalies = validate_account_with_llm(account)
+            #anomalies = anomalies or {}
             # Derive counts from LLM response
             summary = anomalies.get("summary", {}) if isinstance(anomalies, dict) else {}
             bills_with_anomalies = summary.get("bills_with_anomalies", 0)

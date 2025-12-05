@@ -8,6 +8,10 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from sqlalchemy.exc import SQLAlchemyError
 
+# Import S3 utilities
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from src.utils.aws_app import download_json_from_s3, upload_json_to_s3, get_s3_key
+
 # Add project root to path (file is 3 levels deep: src/agents/tariff_analysis_agent/)
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -46,12 +50,13 @@ def clean_json_response(response_text):
 def extract_tariff_logic_hybrid(input_file, output_file):
     logger.info(f"--- Starting Phase 2: Logic Extraction ---")
     
-    if not os.path.exists(input_file):
-        logger.error(f"Input file not found: {input_file}")
-        return
-
-    with open(input_file, 'r') as f:
-        grouped_data = json.load(f)
+    # Load from S3 only
+    s3_key_input = get_s3_key("processed", Path(input_file).name)
+    grouped_data = download_json_from_s3(s3_key_input)
+    
+    if not grouped_data:
+        logger.error(f"Input file not found in S3: {s3_key_input}")
+        raise Exception(f"Failed to load from S3: {s3_key_input}")
 
     # Accept filename from command line argument, otherwise use default
     if len(sys.argv) > 1:
@@ -131,14 +136,16 @@ def extract_tariff_logic_hybrid(input_file, output_file):
     except SQLAlchemyError as e:
         logger.error(f"DB Error: {e}")
 
-    # 4. Save Backup JSON
+    # 4. Save directly to S3 (no local storage)
     try:
-        Path(output_file).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, 'w') as f:
-            json.dump(all_definitions_for_file, f, indent=2)
-        logger.info(f"✅ Backup JSON saved to {output_file}")
+        s3_key_output = get_s3_key("processed", Path(output_file).name)
+        if upload_json_to_s3(all_definitions_for_file, s3_key_output):
+            logger.info(f"✅ Uploaded to S3: {s3_key_output}")
+        else:
+            raise Exception(f"Failed to upload to S3: {s3_key_output}")
     except Exception as e:
-        logger.error(f"Failed to write JSON: {e}")
+        logger.error(f"Failed to upload to S3: {e}")
+        raise
 
 def _get_default_paths():
     root = Path(__file__).resolve().parents[3]
@@ -148,13 +155,5 @@ def _get_default_paths():
 
 if __name__ == "__main__":
     in_file, out_file = _get_default_paths()
-    if not in_file.exists():
-        # Fallback check
-        if Path("grouped_tariffs.json").exists():
-            in_file = Path("grouped_tariffs.json")
-            out_file = Path("final_logic_output.json")
-    
-    if in_file.exists():
-        extract_tariff_logic_hybrid(str(in_file), str(out_file))
-    else:
-        logger.error(f"Input file not found: {in_file}")
+    # Run directly - will fetch from S3
+    extract_tariff_logic_hybrid(str(in_file), str(out_file))

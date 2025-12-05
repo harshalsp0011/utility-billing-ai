@@ -4,6 +4,7 @@ Step 1.3 – Extract text and tables from PDF (config-driven).
 This creates a machine-readable JSON used by later stages.
 """
 
+import logging
 import pdfplumber
 import camelot
 import json
@@ -18,9 +19,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 # Accept PDF path from command line argument, otherwise use default
 if len(sys.argv) > 1:
     PDF_PATH = Path(sys.argv[1])
-    print(f"ℹ️  Using PDF from argument: {PDF_PATH}")
+    print(f" Using PDF from argument: {PDF_PATH}")
+    logging.info(f" Using PDF from argument: {PDF_PATH}")
 else:
-    print("ℹ️  No PDF path provided as argument; using default.")
+    print("No PDF path provided as argument; using default.")
+    logging.info(" No PDF path provided as argument; using default.")
+    
+
 OUTPUT_PATH = PROJECT_ROOT / Path("data/processed/raw_extracted_tarif.json")
 
 def extract_with_pdfplumber(pdf_path: Path):
